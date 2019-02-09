@@ -2,8 +2,11 @@
 
 1. ***10-year survival***. Measure the Receiver-Operating Characteristic Area-Under-Curve (AUC)
    of binary classification of patients surviving longer than 10 years.
+
 2. ***Rank-ordering of events.*** Measure the concordance between predicted risks of patients,
    and the rank-ordering of death events using Concordance Index (CI) 
+
+   
 
 ### Methods and tools plan to use
 
@@ -40,9 +43,7 @@
 
 5. Model selection and Validation 
 
-6. Validation
-
-
+   
 
 ### Timeline for project milestones
 
