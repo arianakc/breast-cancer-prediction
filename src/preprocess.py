@@ -29,13 +29,59 @@ class Preprocessor:
         gdd.download_file_from_google_drive(file_id=data_clinical_patient, dest_path='../data/data_clinical_patient.txt')
 
     def preprocess_clinical_data_file(self):
-        # after row 1984 we cannot use because of two much NAN value
-        self.data_clinical_patient = pd.read_csv("../data/data_clinical_patient.txt", sep='\t', skiprows=524)
+        self.data_clinical_patient = pd.read_csv("../data/data_clinical_patient.txt", sep='\t', skiprows=4,index_col=0)
         print(self.data_clinical_patient.head())
-        imputer = Imputer(missing_values="NaN", strategy="mean", axis=0)
-        
 
+        # Deal with missing value
+        # delete the missing value row
+        # delete the missing value row of categorical value
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['CELLULARITY'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['CHEMOTHERAPY'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['ER_IHC'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['HER2_SNP6'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['HORMONE_THERAPY'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['INTCLUST'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['OS_STATUS'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['CLAUDIN_SUBTYPE'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['THREEGENE'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['VITAL_STATUS'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['LATERALITY'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['RADIO_THERAPY'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['BREAST_SURGERY'])]
 
+        # delete the missing value row of numeric value
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['LYMPH_NODES_EXAMINED_POSITIVE'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['NPI'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['COHORT'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['AGE_AT_DIAGNOSIS'])]
+        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['OS_MONTHS'])]
+
+        print(self.data_clinical_patient.head())
+
+        # encode the categorical value
+        labelencoder = LabelEncoder()
+        self.data_clinical_patient['CELLULARITY'] = labelencoder.fit_transform(self.data_clinical_patient['CELLULARITY'])
+        self.data_clinical_patient['CHEMOTHERAPY'] = labelencoder.fit_transform(self.data_clinical_patient['CHEMOTHERAPY'])
+        self.data_clinical_patient['ER_IHC'] = labelencoder.fit_transform(self.data_clinical_patient['ER_IHC'])
+        self.data_clinical_patient['HER2_SNP6'] = labelencoder.fit_transform(self.data_clinical_patient['HER2_SNP6'])
+        self.data_clinical_patient['HORMONE_THERAPY'] = labelencoder.fit_transform(self.data_clinical_patient['HORMONE_THERAPY'])
+        self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'] = labelencoder.fit_transform(self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'])
+        self.data_clinical_patient['INTCLUST'] = labelencoder.fit_transform(self.data_clinical_patient['INTCLUST'])
+        self.data_clinical_patient['OS_STATUS'] = labelencoder.fit_transform(self.data_clinical_patient['OS_STATUS'])
+        self.data_clinical_patient['CLAUDIN_SUBTYPE'] = labelencoder.fit_transform(self.data_clinical_patient['CLAUDIN_SUBTYPE'])
+        self.data_clinical_patient['THREEGENE'] = labelencoder.fit_transform(self.data_clinical_patient['THREEGENE'])
+        self.data_clinical_patient['VITAL_STATUS'] = labelencoder.fit_transform(self.data_clinical_patient['VITAL_STATUS'])
+        self.data_clinical_patient['LATERALITY'] = labelencoder.fit_transform(self.data_clinical_patient['LATERALITY'])
+        self.data_clinical_patient['RADIO_THERAPY'] = labelencoder.fit_transform(self.data_clinical_patient['RADIO_THERAPY'])
+        self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'] = labelencoder.fit_transform(self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'])
+        self.data_clinical_patient['BREAST_SURGERY'] = labelencoder.fit_transform(self.data_clinical_patient['BREAST_SURGERY'])
+
+        onehotencoder = OneHotEncoder(categorical_features=[2, 3, 5, 6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19])
+        self.data_clinical_patient = onehotencoder.fit_transform(self.data_clinical_patient).toarray()
+
+        print("Generate clinical data matrix successfully")
 
 if __name__ == '__main__':
     preprocessor = Preprocessor()
