@@ -17,11 +17,9 @@
    1. For clinical data:
 
       1. Import data by pandas
-      2. Deal with categorical data with LabelEncoder from sklearn.preprocessing
-      3. Deal with missing data and value with imputing them by following possible values :
-         1. A constant value that has meaning within the domain, such as 0, distinct from all other values.
-         2. A mean, median or mode value for the column.
-
+      2. Deal with categorical data by one-hot encoding
+      3. Deal with missing data and value by deleting the samples  with missing value
+      
    2. For genomic data:
 
       
@@ -50,9 +48,8 @@
 1. Project Plan - due 2/18
 2. Develop the models and evaluate - 2/18 - 4/10
    1. Finish data preprocessing - 2/18 - 2/28
-   2. Finish Baseline methods - 3/1 - 3/10
-   3. Finish Strech algorithms - 3/10 - 3/31
-   4. Finish Model selection and validation - 4/1 - 4/10
+   2. Finish Baseline methods - 3/1 - 3/15
+   3. Finish Strech algorithms - 3/15 - 4/10
 3. Finish the report - 4/10-5/1
 
 
