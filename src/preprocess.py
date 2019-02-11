@@ -81,6 +81,10 @@ class Preprocessor:
         onehotencoder = OneHotEncoder(categorical_features=[2, 3, 5, 6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19])
         self.data_clinical_patient = onehotencoder.fit_transform(self.data_clinical_patient).toarray()
 
+        # Feature Scaling
+        sc = StandardScaler()
+        self.data_clinical_patient = sc.fit_transform(self.data_clinical_patient)
+
         print("Generate clinical data matrix successfully")
 
 if __name__ == '__main__':
