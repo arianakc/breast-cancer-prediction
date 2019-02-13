@@ -17,7 +17,7 @@ class Preprocessor:
         # if there is no data files uncomment the following code.
         # self.get_data_file()
 
-        self.preprocess_clinical_data_file()
+        #self.preprocess_clinical_data_file()
         self.preprocess_genomic_data_file()
 
     def get_data_file(self):
@@ -183,7 +183,7 @@ class Preprocessor:
                     mutation_data_array.append(-1)
             data_array = data_array + mutation_data_array
             self.genomic_patient_feature_matrix.append(data_array)
-
+            self.genomic_patient_feature_matrix = pd.DataFrame(self.genomic_patient_feature_matrix)
         print("Generate clinical data matrix successfully without one-hot encoding and feature scaling")
 
 
