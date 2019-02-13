@@ -13,7 +13,8 @@ class Preprocessor:
         self.data_mutations_mskcc = None
         self.data_clinical_patient = None
         self.patient_dict = {}
-        self.genomic_patient_feature_matrix = []
+        self.genomic_patient_features = []
+        self.genomic_patient_feature_matrix = None
         # if there is no data files uncomment the following code.
         # self.get_data_file()
 
@@ -182,8 +183,8 @@ class Preprocessor:
                     mutation_data_array.append(-1)
                     mutation_data_array.append(-1)
             data_array = data_array + mutation_data_array
-            self.genomic_patient_feature_matrix.append(data_array)
-            self.genomic_patient_feature_matrix = pd.DataFrame(self.genomic_patient_feature_matrix)
+            self.genomic_patient_features.append(data_array)
+        self.genomic_patient_feature_matrix = np.array(self.genomic_patient_features)
         print("Generate clinical data matrix successfully without one-hot encoding and feature scaling")
 
 
