@@ -19,10 +19,12 @@
       1. Import data by pandas
       2. Deal with categorical data by one-hot encoding
       3. Deal with missing data and value by deleting the samples  with missing value
-      
+
    2. For genomic data:
 
-      
+      1. Import data by pandas
+      2. Extract all patient from the tables, make sure the patient is in all three table. Never use fake data.
+      3. For each patient, extract values from each table, particularly for mutation table, just extract "Consequence" and "Variant_Classification" and concatenate these values together.
 
 3. Baseline methods in sklearn:
 
@@ -39,9 +41,12 @@
    3. Exotic neural networks - something that is not ready-made in TensorFlow 
    4. More ..,
 
-5. Model selection and Validation 
+5. Model selection and Validation:
 
-   
+   1. Split train, dev, test as 8:1:1
+   2. ...
+
+    
 
 ### Timeline for project milestones
 
