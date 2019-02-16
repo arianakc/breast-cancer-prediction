@@ -67,7 +67,7 @@ Regression:
 
    1. [L1-regularized logistic regression for large datasets]( https://ai.stanford.edu/~ang/papers/aaai06-l1logisticregression.pdf)  - Caleb Ziems
    2. [XGBoost](https://arxiv.org/abs/1603.02754) - Yunze Hao
-   3. [LSTM Autoencoders](https://arxiv.org/abs/1502.04681)  -  Changmao Li
+   3. [Multilayer perception with grasshopper optimization ](https://www.researchgate.net/profile/Ali_Asghar_Heidari/publication/326692420_An_Efficient_Hybrid_Multilayer_Perceptron_Neural_Network_with_Grasshopper_Optimization/links/5b752129a6fdcc87df804398/An-Efficient-Hybrid-Multilayer-Perceptron-Neural-Network-with-Grasshopper-Optimization.pdf)  -  Changmao Li
    4. TBA - Han He
 
 5. Model selection and Validation:
