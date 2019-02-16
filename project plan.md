@@ -22,7 +22,7 @@ Regression:
 
 ### Methods and tools plan to use
 
-1. programming language: python3.6, pandas, sklearn
+1. programming language and package: python3.6, pandas, sklearn, Keras, Tensorflow... 
 
 2. Data preprocessing
 
@@ -66,9 +66,9 @@ Regression:
 4. Stretch algorithms:
 
    1. [L1-regularized logistic regression for large datasets]( https://ai.stanford.edu/~ang/papers/aaai06-l1logisticregression.pdf)  - Caleb Ziems
-   2. [XGBoost](https://arxiv.org/abs/1603.02754) - TBA
+   2. [XGBoost](https://arxiv.org/abs/1603.02754) - Yunze Hao
    3. [LSTM Autoencoders](https://arxiv.org/abs/1502.04681)  -  Changmao Li
-   4. TBA - TBA
+   4. TBA - Han He
 
 5. Model selection and Validation:
    1. Split train, dev, test as 8:1:1
