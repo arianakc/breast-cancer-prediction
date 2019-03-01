@@ -14,15 +14,20 @@ class Preprocessor:
         self.data_clinical_patient = None
         self.patient_dict = {}
         self.genomic_patient_features = []
-        self.genomic_patient_feature_matrix = None
+        self.genomic_X = None
+        self.genomic_Y = None
         self.clinical_X = None
         self.clinical_Y = None
         self.clinical_patients = None
-        # if there is no data files uncomment the following code.
+        self.clinical_X_genomic_existed = []
+        self.clinical_Y_genomic_existed = []
+        self.patient_vector_dict_X = {}
+        self.patient_vector_dict_Y = {}
+        # if there is no data file uncomment the following code.
         # self.get_data_file()
 
         self.preprocess_clinical_data_file()
-        #self.preprocess_genomic_data_file()
+        self.preprocess_genomic_data_file()
 
     def Y_encoding(self, data):
         Y = []
@@ -52,6 +57,12 @@ class Preprocessor:
         (l, M) = np.linalg.eig(np.dot(X.T, X))
         Y = np.dot(X, M[:, 0:no_dims])
         return Y
+
+    def lst_one_hot(self, lst, size):
+        onehot = np.zeros(size)
+        for i in lst:
+            onehot[i] = 1
+        return list(onehot)
 
     def get_data_file(self):
         data_expression_median = "1jV89yYOUBWnPPC4oOhJGo_MaIwPQ2Nk0"
@@ -124,6 +135,9 @@ class Preprocessor:
         sc = StandardScaler()
         self.clinical_X = sc.fit_transform(self.data_clinical_patient[:, :-1])
         self.clinical_Y = self.data_clinical_patient[:, -1]
+        for i, patient in enumerate(self.clinical_patients):
+            self.patient_vector_dict_X[patient] = self.clinical_X[i, :]
+            self.patient_vector_dict_Y[patient] = self.clinical_Y[i]
 
     def preprocess_genomic_data_file(self):
         # Data expression median is the file of the expression extent of the certain gene by some kind of normalization
@@ -133,7 +147,7 @@ class Preprocessor:
         self.data_CNA = pd.read_csv("../data/data_CNA.txt", sep='\t')
 
         # data mutations is the file of the mutations of gene
-        self.data_mutations_mskcc = pd.read_csv("../data/data_mutations_mskcc.txt", sep='\t', skiprows=1)
+        self.data_mutations_mskcc = pd.read_csv("../data/data_mutations_mskcc.txt", sep='\t', skiprows=1, index_col=0)
 
         print("extract genomic data successfully!")
 
@@ -157,14 +171,13 @@ class Preprocessor:
         # for data_mutations_mskcc
         with open("../data/data_mutations_mskcc.txt", "r") as fin:
             patient_line = fin.readline()
-        print(patient_line)
         patient_line.strip("\n")
         patient_mutation = patient_line.split(" ")[2:]
         for patient in patient_mutation:
             if patient not in  all_patient_dict.keys():
                 cc = len( all_patient_dict)
-                all_patient_dict[patient] = len( all_patient_dict)
-                dd = len( all_patient_dict)
+                all_patient_dict[patient] = len(all_patient_dict)
+                dd = len(all_patient_dict)
                 if cc != dd-1:
                     print("dict wrong assigned")
                     exit(0)
@@ -181,20 +194,27 @@ class Preprocessor:
                             self.patient_dict[patient] = i
                             i = i + 1
         print(self.patient_dict)
-
+        all_patients = []
+        for patient in self.clinical_patients:
+            if patient in self.patient_dict.keys():
+                all_patients.append(patient)
+                self.clinical_X_genomic_existed.append(self.patient_vector_dict_X[patient])
+                self.clinical_Y_genomic_existed.append(self.patient_vector_dict_Y[patient])
 
         #extract all dna name in data_mutations:
         mutation_dnas = []
-        for dna in self.data_mutations_mskcc["Hugo_Symbol"]:
+        for dna in self.data_mutations_mskcc.index:
             if dna not in mutation_dnas:
                 mutation_dnas.append(dna)
+        len(mutation_dnas)
+
+        self.data_mutations_mskcc["ID"] = self.data_mutations_mskcc["Variant_Classification"] + self.data_mutations_mskcc.index
 
         labelencoder = LabelEncoder()
-        self.data_mutations_mskcc["Consequence"] = labelencoder.fit_transform(self.data_mutations_mskcc["Consequence"])
-        self.data_mutations_mskcc["Variant_Classification"] = labelencoder.fit_transform(self.data_mutations_mskcc["Variant_Classification"])
+        self.data_mutations_mskcc["ID"] = labelencoder.fit_transform(self.data_mutations_mskcc["ID"])
 
         # for each patient build input matrix from all three tables
-        for patient in self.patient_dict.keys():
+        for patient in all_patients:
             # deal with data_expression_median:
             data_array = []
             data_array = data_array+list(self.data_expression_median[patient])
@@ -202,21 +222,22 @@ class Preprocessor:
             # deal with data_cna:
             data_array = data_array + (list(self.data_CNA[patient]))
 
-            # deal with data_mutations, for each we only need Variant Classification and Consequence
-            mutation_data_array = []
-            if patient in self.data_mutations_mskcc["Tumor_Sample_Barcode"]:
-                data_mutation_rows = self.data_mutations_mskcc.loc[self.data_mutations_mskcc["Tumor_Sample_Barcode"] == patient]
-                for dna in mutation_dnas:
-                    if dna in data_mutation_rows["Hugo_Symbol"]:
-                        mutation_data_array.append(data_mutation_rows["Variant_Classification"])
-                    else:
-                        mutation_data_array.append(-1)
+            # deal with data_mutations, for each we only need Variant Classification
+            size = len(set(self.data_mutations_mskcc["ID"]))
+            mutation_rows = self.data_mutations_mskcc[self.data_mutations_mskcc["Tumor_Sample_Barcode"] == patient]
+            lst = list(set(mutation_rows["ID"]))
+            if len(lst) > 0:
+                data_array += self.lst_one_hot(lst, size)
             else:
-                for dna in mutation_dnas:
-                    mutation_data_array.append(-1)
-            data_array = data_array + mutation_data_array
+                data_array += list(np.zeros(size))
             self.genomic_patient_features.append(data_array)
-        self.genomic_patient_feature_matrix = np.array(self.genomic_patient_features)
+        self.genomic_X = np.array(self.genomic_patient_features)
+        # Feature Scaling
+        sc = StandardScaler()
+        self.genomic_X = sc.fit_transform(self.genomic_X)
+        self.genomic_Y = np.array(self.clinical_Y_genomic_existed)
+        self.clinical_X = np.array(self.clinical_X_genomic_existed)
+        self.clinical_Y = np.array(self.clinical_Y_genomic_existed)
         print("Generate clinical data matrix successfully without one-hot encoding and feature scaling")
 
 
