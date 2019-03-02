@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import Imputer, LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 
+
 class Preprocessor:
 
     def __init__(self):
@@ -67,15 +68,17 @@ class Preprocessor:
     def get_data_file(self):
         data_expression_median = "1jV89yYOUBWnPPC4oOhJGo_MaIwPQ2Nk0"
         data_CNA = "1ac045VSEWOxgkSdZREdW3z5KNRpoObCt"
-        data_mutations_mskcc  = "1YOg6G0DGQu5LLIO8-E1Fkz2f43_zNIG-"
+        data_mutations_mskcc = "1YOg6G0DGQu5LLIO8-E1Fkz2f43_zNIG-"
         data_clinical_patient = "1GYWvq1XsCqJvTE38hWU-Zu7EMjoKoKnl"
-        gdd.download_file_from_google_drive(file_id=data_expression_median, dest_path='../data/data_expression_median.txt')
+        gdd.download_file_from_google_drive(file_id=data_expression_median,
+                                            dest_path='../data/data_expression_median.txt')
         gdd.download_file_from_google_drive(file_id=data_CNA, dest_path='../data/data_CNA.txt')
         gdd.download_file_from_google_drive(file_id=data_mutations_mskcc, dest_path='../data/data_mutations_mskcc.txt')
-        gdd.download_file_from_google_drive(file_id=data_clinical_patient, dest_path='../data/data_clinical_patient.txt')
+        gdd.download_file_from_google_drive(file_id=data_clinical_patient,
+                                            dest_path='../data/data_clinical_patient.txt')
 
     def preprocess_clinical_data_file(self):
-        self.data_clinical_patient = pd.read_csv("../data/data_clinical_patient.txt", sep='\t', skiprows=4,index_col=0)
+        self.data_clinical_patient = pd.read_csv("../data/data_clinical_patient.txt", sep='\t', skiprows=4, index_col=0)
         print(self.data_clinical_patient.head())
 
         # add Y
@@ -88,12 +91,12 @@ class Preprocessor:
         self.data_clinical_patient = self.data_clinical_patient[self.data_clinical_patient['Y'] != -1]
 
         # drop the missing value rows of numeric value
-        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['LYMPH_NODES_EXAMINED_POSITIVE'])]
+        self.data_clinical_patient = self.data_clinical_patient[
+            pd.notnull(self.data_clinical_patient['LYMPH_NODES_EXAMINED_POSITIVE'])]
         self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['NPI'])]
         self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['COHORT'])]
-        self.data_clinical_patient = self.data_clinical_patient[pd.notnull(self.data_clinical_patient['AGE_AT_DIAGNOSIS'])]
-
-
+        self.data_clinical_patient = self.data_clinical_patient[
+            pd.notnull(self.data_clinical_patient['AGE_AT_DIAGNOSIS'])]
 
         # Deal with categorical missing value
         # drop the missing value row whose number of missing value is >2:
@@ -104,29 +107,40 @@ class Preprocessor:
         self.clinical_patients = list(self.data_clinical_patient.index.values)
 
         # set the null value as a categorial
-        self.data_clinical_patient['CELLULARITY'] = self.data_clinical_patient['CELLULARITY'].apply(self.get_rid_of_nulls)
+        self.data_clinical_patient['CELLULARITY'] = self.data_clinical_patient['CELLULARITY'].apply(
+            self.get_rid_of_nulls)
         self.data_clinical_patient['ER_IHC'] = self.data_clinical_patient['ER_IHC'].apply(self.get_rid_of_nulls)
         self.data_clinical_patient['THREEGENE'] = self.data_clinical_patient['THREEGENE'].apply(self.get_rid_of_nulls)
         self.data_clinical_patient['LATERALITY'] = self.data_clinical_patient['LATERALITY'].apply(self.get_rid_of_nulls)
-        self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'] = self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'].apply(self.get_rid_of_nulls)
-        self.data_clinical_patient['BREAST_SURGERY'] = self.data_clinical_patient['BREAST_SURGERY'].apply(self.get_rid_of_nulls)
+        self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'] = self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'].apply(
+            self.get_rid_of_nulls)
+        self.data_clinical_patient['BREAST_SURGERY'] = self.data_clinical_patient['BREAST_SURGERY'].apply(
+            self.get_rid_of_nulls)
 
         # encode the categorical value
         labelencoder = LabelEncoder()
-        self.data_clinical_patient['CELLULARITY'] = labelencoder.fit_transform(self.data_clinical_patient['CELLULARITY'])
-        self.data_clinical_patient['CHEMOTHERAPY'] = labelencoder.fit_transform(self.data_clinical_patient['CHEMOTHERAPY'])
+        self.data_clinical_patient['CELLULARITY'] = labelencoder.fit_transform(
+            self.data_clinical_patient['CELLULARITY'])
+        self.data_clinical_patient['CHEMOTHERAPY'] = labelencoder.fit_transform(
+            self.data_clinical_patient['CHEMOTHERAPY'])
         self.data_clinical_patient['ER_IHC'] = labelencoder.fit_transform(self.data_clinical_patient['ER_IHC'])
         self.data_clinical_patient['HER2_SNP6'] = labelencoder.fit_transform(self.data_clinical_patient['HER2_SNP6'])
-        self.data_clinical_patient['HORMONE_THERAPY'] = labelencoder.fit_transform(self.data_clinical_patient['HORMONE_THERAPY'])
-        self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'] = labelencoder.fit_transform(self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'])
+        self.data_clinical_patient['HORMONE_THERAPY'] = labelencoder.fit_transform(
+            self.data_clinical_patient['HORMONE_THERAPY'])
+        self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'] = labelencoder.fit_transform(
+            self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'])
         self.data_clinical_patient['INTCLUST'] = labelencoder.fit_transform(self.data_clinical_patient['INTCLUST'])
         self.data_clinical_patient['OS_STATUS'] = labelencoder.fit_transform(self.data_clinical_patient['OS_STATUS'])
-        self.data_clinical_patient['CLAUDIN_SUBTYPE'] = labelencoder.fit_transform(self.data_clinical_patient['CLAUDIN_SUBTYPE'])
+        self.data_clinical_patient['CLAUDIN_SUBTYPE'] = labelencoder.fit_transform(
+            self.data_clinical_patient['CLAUDIN_SUBTYPE'])
         self.data_clinical_patient['THREEGENE'] = labelencoder.fit_transform(self.data_clinical_patient['THREEGENE'])
         self.data_clinical_patient['LATERALITY'] = labelencoder.fit_transform(self.data_clinical_patient['LATERALITY'])
-        self.data_clinical_patient['RADIO_THERAPY'] = labelencoder.fit_transform(self.data_clinical_patient['RADIO_THERAPY'])
-        self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'] = labelencoder.fit_transform(self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'])
-        self.data_clinical_patient['BREAST_SURGERY'] = labelencoder.fit_transform(self.data_clinical_patient['BREAST_SURGERY'])
+        self.data_clinical_patient['RADIO_THERAPY'] = labelencoder.fit_transform(
+            self.data_clinical_patient['RADIO_THERAPY'])
+        self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'] = labelencoder.fit_transform(
+            self.data_clinical_patient['HISTOLOGICAL_SUBTYPE'])
+        self.data_clinical_patient['BREAST_SURGERY'] = labelencoder.fit_transform(
+            self.data_clinical_patient['BREAST_SURGERY'])
 
         onehotencoder = OneHotEncoder(categorical_features=[2, 3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17])
         self.data_clinical_patient = onehotencoder.fit_transform(self.data_clinical_patient).toarray()
@@ -156,15 +170,15 @@ class Preprocessor:
         # First extract patient from those three tables
         # for data_expression_median
         for i, patient in enumerate(list(self.data_expression_median.columns[2:])):
-            if patient not in  all_patient_dict.keys():
+            if patient not in all_patient_dict.keys():
                 all_patient_dict[patient] = i
         # for data_CNA
         for patient in list(self.data_CNA.columns[2:]):
-            if patient not in  all_patient_dict.keys():
-                cc = len( all_patient_dict)
-                all_patient_dict[patient] = len( all_patient_dict)
-                dd = len( all_patient_dict)
-                if cc != dd-1:
+            if patient not in all_patient_dict.keys():
+                cc = len(all_patient_dict)
+                all_patient_dict[patient] = len(all_patient_dict)
+                dd = len(all_patient_dict)
+                if cc != dd - 1:
                     print("dict wrong assigned")
                     exit(0)
 
@@ -174,11 +188,11 @@ class Preprocessor:
         patient_line.strip("\n")
         patient_mutation = patient_line.split(" ")[2:]
         for patient in patient_mutation:
-            if patient not in  all_patient_dict.keys():
-                cc = len( all_patient_dict)
+            if patient not in all_patient_dict.keys():
+                cc = len(all_patient_dict)
                 all_patient_dict[patient] = len(all_patient_dict)
                 dd = len(all_patient_dict)
-                if cc != dd-1:
+                if cc != dd - 1:
                     print("dict wrong assigned")
                     exit(0)
 
@@ -201,14 +215,15 @@ class Preprocessor:
                 self.clinical_X_genomic_existed.append(self.patient_vector_dict_X[patient])
                 self.clinical_Y_genomic_existed.append(self.patient_vector_dict_Y[patient])
 
-        #extract all dna name in data_mutations:
+        # extract all dna name in data_mutations:
         mutation_dnas = []
         for dna in self.data_mutations_mskcc.index:
             if dna not in mutation_dnas:
                 mutation_dnas.append(dna)
         len(mutation_dnas)
 
-        self.data_mutations_mskcc["ID"] = self.data_mutations_mskcc["Variant_Classification"] + self.data_mutations_mskcc.index
+        self.data_mutations_mskcc["ID"] = self.data_mutations_mskcc[
+                                              "Variant_Classification"] + self.data_mutations_mskcc.index
 
         labelencoder = LabelEncoder()
         self.data_mutations_mskcc["ID"] = labelencoder.fit_transform(self.data_mutations_mskcc["ID"])
@@ -217,7 +232,7 @@ class Preprocessor:
         for patient in all_patients:
             # deal with data_expression_median:
             data_array = []
-            data_array = data_array+list(self.data_expression_median[patient])
+            data_array = data_array + list(self.data_expression_median[patient])
 
             # deal with data_cna:
             data_array = data_array + (list(self.data_CNA[patient]))
@@ -235,9 +250,13 @@ class Preprocessor:
         # Feature Scaling
         sc = StandardScaler()
         self.genomic_X = sc.fit_transform(self.genomic_X)
-        self.genomic_Y = np.array(self.clinical_Y_genomic_existed)
-        self.clinical_X = np.array(self.clinical_X_genomic_existed)
-        self.clinical_Y = np.array(self.clinical_Y_genomic_existed)
+        df = pd.DataFrame(self.genomic_X)
+        indexs = np.where(np.isnan(df))
+        nulllistindex = list(set(indexs[0]))
+        self.genomic_X = np.delete(self.genomic_X, nulllistindex, axis=0)
+        self.genomic_Y = np.delete(np.array(self.clinical_Y_genomic_existed), nulllistindex, axis=0)
+        self.clinical_X = np.delete(np.array(self.clinical_X_genomic_existed), nulllistindex, axis=0)
+        self.clinical_Y = np.delete(np.array(self.clinical_Y_genomic_existed), nulllistindex, axis=0)
         print("Generate clinical data matrix successfully without one-hot encoding and feature scaling")
 
 
