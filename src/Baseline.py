@@ -49,7 +49,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
 
-    printer = ['LogisticRegression','KNeighborsClassifier','Linear SVC', 'rbf SVC','GaussianNB'
+    printer = ['LogisticRegression','KNeighborsClassifier','Linear SVC', 'rbf SVC','GaussianNB',
                'DecisionTreeClassifier','RandomForestClassifier']
     inner = [LogisticRegression(random_state = 0),KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2),
              SVC(kernel = 'linear', random_state = 0),SVC(kernel = 'rbf', random_state = 0),GaussianNB(),
@@ -62,8 +62,13 @@ def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
         Y_pred = classifier.predict(CvalX)
         fpr, tpr, thresholds = roc_curve(CvalY, Y_pred)
         auc1 = auc(fpr, tpr)
-        print('The AUC of dealing clinical data with'+ printer[i]+'is: ',auc1)
+        print('The AUC of dealing clinical data with '+ printer[i]+'is: ',auc1)
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
         plt.plot(fpr, tpr,lw=1)
+        plt.text(0.5,0.3,'ROC curve (area = %0.2f)' % auc1)
+        plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
+        plt.title('Clinical data with '+ printer[i])
         plt.show()
 
         classifier = inner[i]
@@ -71,8 +76,13 @@ def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
         Y_pred = classifier.predict(GvalX)
         fpr, tpr, thresholds = roc_curve(GvalY, Y_pred)
         auc2 = auc(fpr, tpr)
-        print('The AUC of dealing genetic data with'+ printer[i]+'is: ',auc2)
+        print('The AUC of dealing genetic data with '+ printer[i]+'is: ',auc2)
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
         plt.plot(fpr, tpr,lw=1)
+        plt.text(0.5,0.3,'ROC curve (area = %0.2f)' % auc1)
+        plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
+        plt.title('Genetic data with '+ printer[i] )
         plt.show()
 
 baseline(Ctr_X,Ctr_Y,Cval_X,Cval_Y,Gtr_X,Gtr_Y,Gval_X,Gval_Y)
