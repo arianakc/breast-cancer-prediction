@@ -79,7 +79,7 @@ class Preprocessor:
 
     def preprocess_clinical_data_file(self):
         self.data_clinical_patient = pd.read_csv("../data/data_clinical_patient.txt", sep='\t', skiprows=4, index_col=0)
-        print(self.data_clinical_patient.head())
+        # print(self.data_clinical_patient.head())
 
         # add Y
         self.data_clinical_patient['Y'] = self.Y_encoding(self.data_clinical_patient)
@@ -163,8 +163,6 @@ class Preprocessor:
         # data mutations is the file of the mutations of gene
         self.data_mutations_mskcc = pd.read_csv("../data/data_mutations_mskcc.txt", sep='\t', skiprows=1, index_col=0)
 
-        print("extract genomic data successfully!")
-
         all_patient_dict = {}
         # The target of this preprocess is to build the input matrix of features of gene based on each patient.
         # First extract patient from those three tables
@@ -196,8 +194,6 @@ class Preprocessor:
                     print("dict wrong assigned")
                     exit(0)
 
-        print("all_patient_dict:", all_patient_dict)
-
         # extract patients who are in all three tables, don't want to learn from fake data.
         i = 0
         for patient in all_patient_dict.keys():
@@ -207,20 +203,14 @@ class Preprocessor:
                         if patient not in self.patient_dict.keys():
                             self.patient_dict[patient] = i
                             i = i + 1
-        print(self.patient_dict)
+
+        # combine patients with clinical data
         all_patients = []
         for patient in self.clinical_patients:
             if patient in self.patient_dict.keys():
                 all_patients.append(patient)
                 self.clinical_X_genomic_existed.append(self.patient_vector_dict_X[patient])
                 self.clinical_Y_genomic_existed.append(self.patient_vector_dict_Y[patient])
-
-        # extract all dna name in data_mutations:
-        mutation_dnas = []
-        for dna in self.data_mutations_mskcc.index:
-            if dna not in mutation_dnas:
-                mutation_dnas.append(dna)
-        len(mutation_dnas)
 
         self.data_mutations_mskcc["ID"] = self.data_mutations_mskcc[
                                               "Variant_Classification"] + self.data_mutations_mskcc.index
@@ -257,7 +247,7 @@ class Preprocessor:
         self.genomic_Y = np.delete(np.array(self.clinical_Y_genomic_existed), nulllistindex, axis=0)
         self.clinical_X = np.delete(np.array(self.clinical_X_genomic_existed), nulllistindex, axis=0)
         self.clinical_Y = np.delete(np.array(self.clinical_Y_genomic_existed), nulllistindex, axis=0)
-        print("Generate clinical data matrix successfully without one-hot encoding and feature scaling")
+        print("Generate genomic data matrix and clinical data matrix successfully")
 
 
 if __name__ == '__main__':
