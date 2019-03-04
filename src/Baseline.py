@@ -15,22 +15,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import  MLPClassifier
 
-# def devide(X,Y,kFolds):
-#     devided = [[],[],[],[],[],[]]
-#     i=0
-#     while i <len(Y):
-#         assign = randint(0,kFolds-1)
-#         if assign == kFolds - 1:
-#             devided[4].append(X[i])
-#             devided[5].append(Y[i])
-#         elif assign == kFolds -2:
-#             devided[2].append(X[i])
-#             devided[3].append(Y[i])
-#         else:
-#             devided[0].append(X[i])
-#             devided[1].append(Y[i])
-#         i += 1
-#     return [ _ for _ in devided ]
 
 def devide(X, Y):
     X, Y = shuffle(X, Y, random_state=0)
@@ -42,43 +26,37 @@ def devide(X, Y):
     y_tst = Y[int(len(Y)*0.9):len(Y)]
     return x_train, y_train, x_val, y_val, x_tst, y_tst
 
-def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
 
+def classify(classifier, X, Y, valX, valY, name, type):
+    classifier.fit(X, Y)
+    Y_pred = classifier.predict(valX)
+    fpr, tpr, thresholds = roc_curve(valY, Y_pred)
+    auc1 = auc(fpr, tpr)
+    print('The AUC of dealing '+type+' data with ' + name + 'is: ', auc1)
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.plot(fpr, tpr, lw=1)
+    plt.text(0.5, 0.3, 'ROC curve (area = %0.2f)' % auc1)
+    plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
+    plt.title(type+' data with ' + name)
+    plt.show()
+
+
+def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
     printer = ['MLPClassifier', 'LogisticRegression','KNeighborsClassifier','Linear SVC', 'rbf SVC','GaussianNB',
                'DecisionTreeClassifier','RandomForestClassifier']
-    inner = [ MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1), LogisticRegression(random_state = 0),KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2),
-             SVC(kernel = 'linear', random_state = 0),SVC(kernel = 'rbf', random_state = 0),GaussianNB(),
-             DecisionTreeClassifier(criterion = 'entropy', random_state = 0),
-             RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)]
+    inner = [MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1),
+              LogisticRegression(random_state=0),
+              KNeighborsClassifier(n_neighbors=5, metric='minkowski', p=2),
+             SVC(kernel='linear', random_state=0),
+              SVC(kernel='rbf', random_state=0),
+             GaussianNB(),
+             DecisionTreeClassifier(criterion='entropy', random_state=0),
+             RandomForestClassifier(n_estimators=10, criterion='entropy', random_state=0)]
     for i in range(len(printer)):
         print('----------------------'+printer[i]+'-----------------------')
-        classifier = inner[i]
-        classifier.fit(CtrX, CtrY)
-        Y_pred = classifier.predict(CvalX)
-        fpr, tpr, thresholds = roc_curve(CvalY, Y_pred)
-        auc1 = auc(fpr, tpr)
-        print('The AUC of dealing clinical data with '+ printer[i]+'is: ',auc1)
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.plot(fpr, tpr,lw=1)
-        plt.text(0.5,0.3,'ROC curve (area = %0.2f)' % auc1)
-        plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
-        plt.title('Clinical data with '+ printer[i])
-        plt.show()
-
-        classifier = inner[i]
-        classifier.fit(GtrX,GtrY)
-        Y_pred = classifier.predict(GvalX)
-        fpr, tpr, thresholds = roc_curve(GvalY, Y_pred)
-        auc2 = auc(fpr, tpr)
-        print('The AUC of dealing genetic data with '+ printer[i]+'is: ',auc2)
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.plot(fpr, tpr,lw=1)
-        plt.text(0.5,0.3,'ROC curve (area = %0.2f)' % auc1)
-        plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
-        plt.title('Genetic data with ' +  printer[i])
-        plt.show()
+        classify(inner[i], CtrX, CtrY, CvalX, CvalY, printer[i], "clinical")
+        classify(inner[i], GtrX, GtrY, GvalX, GvalY, printer[i], "genetic")
 
 
 if __name__ == '__main__':
