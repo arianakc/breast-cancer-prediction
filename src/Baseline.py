@@ -3,6 +3,7 @@ import numpy as np
 from random import randint
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.utils import shuffle
 
 #Using 7 baseline methods to predict and compute results' AUC.
 from sklearn.linear_model import LogisticRegression
@@ -14,23 +15,32 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import  MLPClassifier
 
-def devide(X,Y,kFolds):
-    devided = [[],[],[],[],[],[]]
-    i=0
-    while i <len(Y):
-        assign = randint(0,kFolds-1)
-        if assign == kFolds - 1:
-            devided[4].append(X[i])
-            devided[5].append(Y[i])
-        elif assign == kFolds -2:
-            devided[2].append(X[i])
-            devided[3].append(Y[i])
-        else:
-            devided[0].append(X[i])
-            devided[1].append(Y[i])
-        i += 1
-    return [ _ for _ in devided ]
+# def devide(X,Y,kFolds):
+#     devided = [[],[],[],[],[],[]]
+#     i=0
+#     while i <len(Y):
+#         assign = randint(0,kFolds-1)
+#         if assign == kFolds - 1:
+#             devided[4].append(X[i])
+#             devided[5].append(Y[i])
+#         elif assign == kFolds -2:
+#             devided[2].append(X[i])
+#             devided[3].append(Y[i])
+#         else:
+#             devided[0].append(X[i])
+#             devided[1].append(Y[i])
+#         i += 1
+#     return [ _ for _ in devided ]
 
+def devide(X, Y):
+    X, Y = shuffle(X, Y, random_state=0)
+    x_train = X[0:int(len(X)*0.8)]
+    y_train = Y[0:int(len(Y)*0.8)]
+    x_val = X[int(len(X)*0.8):int(len(X)*0.9)]
+    y_val = Y[int(len(Y)*0.8):int(len(Y)*0.9)]
+    x_tst = X[int(len(X)*0.9):len(X)]
+    y_tst = Y[int(len(Y)*0.9):len(Y)]
+    return x_train, y_train, x_val, y_val, x_tst, y_tst
 
 def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
 
@@ -80,6 +90,6 @@ if __name__ == '__main__':
     genomic_Y = preprocessor.genomic_Y
 
     # devide data set into 8:1:1 as train,validate,test set
-    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = devide(clinical_X, clinical_Y, 10)
-    Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = devide(genomic_X, genomic_Y, 10)
+    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = devide(clinical_X, clinical_Y)
+    Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = devide(genomic_X, genomic_Y)
     baseline(Ctr_X,Ctr_Y,Cval_X,Cval_Y,Gtr_X,Gtr_Y,Gval_X,Gval_Y)
