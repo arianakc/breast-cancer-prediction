@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import Imputer, LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 
+from src.Baseline import devide
+
 
 class Preprocessor:
 
@@ -249,6 +251,19 @@ class Preprocessor:
         self.clinical_Y = np.delete(np.array(self.clinical_Y_genomic_existed), nulllistindex, axis=0)
         print("Generate genomic data matrix and clinical data matrix successfully")
 
+
+def load_data():
+    # preprocessing data
+    preprocessor = Preprocessor()
+    clinical_X = preprocessor.clinical_X
+    clinical_Y = preprocessor.clinical_Y
+    genomic_X = preprocessor.genomic_X
+    genomic_Y = preprocessor.genomic_Y
+
+    # devide data set into 8:1:1 as train,validate,test set
+    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = devide(clinical_X, clinical_Y)
+    Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = devide(genomic_X, genomic_Y)
+    return Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y
 
 if __name__ == '__main__':
     preprocessor = Preprocessor()
