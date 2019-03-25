@@ -1,4 +1,5 @@
 from src.preprocess import Preprocessor
+from src.preprocess import load_data
 import numpy as np
 from random import randint
 import pandas as pd
@@ -14,18 +15,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import  MLPClassifier
-
-
-def devide(X, Y):
-    X, Y = shuffle(X, Y, random_state=0)
-    x_train = X[0:int(len(X)*0.8)]
-    y_train = Y[0:int(len(Y)*0.8)]
-    x_val = X[int(len(X)*0.8):int(len(X)*0.9)]
-    y_val = Y[int(len(Y)*0.8):int(len(Y)*0.9)]
-    x_tst = X[int(len(X)*0.9):len(X)]
-    y_tst = Y[int(len(Y)*0.9):len(Y)]
-    return x_train, y_train, x_val, y_val, x_tst, y_tst
-
 
 def classify(classifier, X, Y, valX, valY, name, type):
     classifier.fit(X, Y)
@@ -60,14 +49,5 @@ def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
 
 
 if __name__ == '__main__':
-    # preprocessing data
-    preprocessor = Preprocessor()
-    clinical_X = preprocessor.clinical_X
-    clinical_Y = preprocessor.clinical_Y
-    genomic_X = preprocessor.genomic_X
-    genomic_Y = preprocessor.genomic_Y
-
-    # devide data set into 8:1:1 as train,validate,test set
-    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = devide(clinical_X, clinical_Y)
-    Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = devide(genomic_X, genomic_Y)
-    baseline(Ctr_X,Ctr_Y,Cval_X,Cval_Y,Gtr_X,Gtr_Y,Gval_X,Gval_Y)
+    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data()
+    baseline(Ctr_X, Ctr_Y, Cval_X, Cval_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y)

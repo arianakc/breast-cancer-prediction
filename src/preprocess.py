@@ -4,9 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import Imputer, LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
-
-from src.Baseline import devide
-
+from sklearn.utils import shuffle
 
 class Preprocessor:
 
@@ -251,6 +249,15 @@ class Preprocessor:
         self.clinical_Y = np.delete(np.array(self.clinical_Y_genomic_existed), nulllistindex, axis=0)
         print("Generate genomic data matrix and clinical data matrix successfully")
 
+def divide(X, Y):
+    X, Y = shuffle(X, Y, random_state=0)
+    x_train = X[0:int(len(X)*0.8)]
+    y_train = Y[0:int(len(Y)*0.8)]
+    x_val = X[int(len(X)*0.8):int(len(X)*0.9)]
+    y_val = Y[int(len(Y)*0.8):int(len(Y)*0.9)]
+    x_tst = X[int(len(X)*0.9):len(X)]
+    y_tst = Y[int(len(Y)*0.9):len(Y)]
+    return x_train, y_train, x_val, y_val, x_tst, y_tst
 
 def load_data():
     # preprocessing data
@@ -261,8 +268,8 @@ def load_data():
     genomic_Y = preprocessor.genomic_Y
 
     # devide data set into 8:1:1 as train,validate,test set
-    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = devide(clinical_X, clinical_Y)
-    Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = devide(genomic_X, genomic_Y)
+    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = divide(clinical_X, clinical_Y)
+    Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = divide(genomic_X, genomic_Y)
     return Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y
 
 if __name__ == '__main__':
