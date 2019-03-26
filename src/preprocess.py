@@ -1,15 +1,13 @@
+import numpy as np
 import pandas as pd
 from google_drive_downloader import GoogleDriveDownloader as gdd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import Imputer, LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.utils import shuffle
 
 
 class Preprocessor:
 
-    def __init__(self):
+    def __init__(self, keep_unlabeled_data=False):
         self.data_expression_median = None
         self.data_CNA = None
         self.data_mutations_mskcc = None
@@ -28,7 +26,7 @@ class Preprocessor:
         # if there is no data file uncomment the following code.
         # self.get_data_file()
 
-        self.preprocess_clinical_data_file()
+        self.preprocess_clinical_data_file(keep_unlabeled_data)
         self.preprocess_genomic_data_file()
 
     def Y_encoding(self, data):
@@ -78,7 +76,7 @@ class Preprocessor:
         gdd.download_file_from_google_drive(file_id=data_clinical_patient,
                                             dest_path='../data/data_clinical_patient.txt')
 
-    def preprocess_clinical_data_file(self):
+    def preprocess_clinical_data_file(self, keep_unlabeled_data=False):
         self.data_clinical_patient = pd.read_csv("../data/data_clinical_patient.txt", sep='\t', skiprows=4, index_col=0)
         # print(self.data_clinical_patient.head())
 
@@ -89,7 +87,8 @@ class Preprocessor:
         self.data_clinical_patient.drop(columns=['OS_MONTHS', 'VITAL_STATUS'], inplace=True)
 
         # drop ignored rows
-        self.data_clinical_patient = self.data_clinical_patient[self.data_clinical_patient['Y'] != -1]
+        if not keep_unlabeled_data:
+            self.data_clinical_patient = self.data_clinical_patient[self.data_clinical_patient['Y'] != -1]
 
         # drop the missing value rows of numeric value
         self.data_clinical_patient = self.data_clinical_patient[
@@ -262,19 +261,35 @@ def divide(X, Y):
     return x_train, y_train, x_val, y_val, x_tst, y_tst
 
 
-def load_data():
+def load_data(keep_unlabeled_data=False):
     # preprocessing data
-    preprocessor = Preprocessor()
+    preprocessor = Preprocessor(keep_unlabeled_data)
     clinical_X = preprocessor.clinical_X
     clinical_Y = preprocessor.clinical_Y
+    if keep_unlabeled_data:
+        unlabeled_clinical_X = clinical_Y[clinical_Y == -1]
+        clinical_X = clinical_X[clinical_Y != -1]
+        clinical_Y = clinical_Y[clinical_Y != -1]
+
     genomic_X = preprocessor.genomic_X
     genomic_Y = preprocessor.genomic_Y
 
     # devide data set into 8:1:1 as train,validate,test set
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = divide(clinical_X, clinical_Y)
     Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = divide(genomic_X, genomic_Y)
+    if keep_unlabeled_data:
+        return unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y
     return Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y
 
 
 if __name__ == '__main__':
-    preprocessor = Preprocessor()
+    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(False)
+    unlabeled_clinical_X, Ctr_X2, Ctr_Y2, Cval_X2, Cval_Y2, Ct_X2, Ct_Y2, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(
+        True)
+    # feature values are not equal due to scaling
+    # assert np.array_equal(Ctr_X, Ctr_X2)
+    assert np.array_equal(Ctr_Y, Ctr_Y2)
+    # assert np.array_equal(Cval_X, Cval_X2)
+    assert np.array_equal(Cval_Y, Cval_Y2)
+    # assert np.array_equal(Ct_X, Ct_X2)
+    assert np.array_equal(Ct_Y, Ct_Y2)
