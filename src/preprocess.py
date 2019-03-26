@@ -278,7 +278,7 @@ def load_data(keep_unlabeled_data=False):
     clinical_X = preprocessor.clinical_X
     clinical_Y = preprocessor.clinical_Y
     if keep_unlabeled_data:
-        unlabeled_clinical_X = clinical_Y[clinical_Y == -1]
+        unlabeled_clinical_X = clinical_X[clinical_Y == -1]
         clinical_X = clinical_X[clinical_Y != -1]
         clinical_Y = clinical_Y[clinical_Y != -1]
 
