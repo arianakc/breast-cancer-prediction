@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import numpy as np
 import pandas as pd
 from google_drive_downloader import GoogleDriveDownloader as gdd
@@ -262,6 +265,14 @@ def divide(X, Y):
 
 
 def load_data(keep_unlabeled_data=False):
+    curdir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(curdir, '..', 'data')
+    cache_path = os.path.join(data_dir, 'unlabeled.pkl' if keep_unlabeled_data else 'labeled.pkl')
+    try:
+        with open(cache_path, 'rb') as f:
+            return pickle.load(f)
+    except Exception:
+        pass
     # preprocessing data
     preprocessor = Preprocessor(keep_unlabeled_data)
     clinical_X = preprocessor.clinical_X
@@ -278,8 +289,13 @@ def load_data(keep_unlabeled_data=False):
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = divide(clinical_X, clinical_Y)
     Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = divide(genomic_X, genomic_Y)
     if keep_unlabeled_data:
-        return unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y
-    return Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y
+        data = (
+            unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y)
+    else:
+        data = (Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y)
+    with open(cache_path, 'wb') as f:
+        pickle.dump(data, f)
+    return data
 
 
 if __name__ == '__main__':
