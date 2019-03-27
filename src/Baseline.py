@@ -36,7 +36,7 @@ def classify(classifier, X, Y, valX, valY, name, type):
 def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
     printer = ['MLPClassifier', 'LogisticRegression', 'KNeighborsClassifier', 'Linear SVC', 'rbf SVC', 'GaussianNB',
                'DecisionTreeClassifier', 'RandomForestClassifier']
-    inner = [MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(70), random_state=1),
+    inner_ctr = [MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(70), random_state=1),
               LogisticRegression(random_state=0),
               KNeighborsClassifier(n_neighbors=5, metric='minkowski', p=2),
              SVC(kernel='linear', random_state=0),
@@ -44,10 +44,18 @@ def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
              GaussianNB(),
              DecisionTreeClassifier(criterion='entropy', random_state=0),
              RandomForestClassifier(n_estimators=10, criterion='entropy', random_state=0)]
+    inner_gtr = [MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(36), random_state=1),
+                 LogisticRegression(random_state=0),
+                 KNeighborsClassifier(n_neighbors=5, metric='minkowski', p=2),
+                 SVC(kernel='linear', random_state=0),
+                 SVC(kernel='rbf', random_state=0),
+                 GaussianNB(),
+                 DecisionTreeClassifier(criterion='entropy', random_state=0),
+                 RandomForestClassifier(n_estimators=10, criterion='entropy', random_state=0)]
     for i in range(len(printer)):
         print('----------------------'+printer[i]+'-----------------------')
-        classify(inner[i], CtrX, CtrY, CvalX, CvalY, printer[i], "clinical")
-        classify(inner[i], GtrX, GtrY, GvalX, GvalY, printer[i], "genetic")
+        classify(inner_ctr[i], CtrX, CtrY, CvalX, CvalY, printer[i], "clinical")
+        classify(inner_gtr[i], GtrX, GtrY, GvalX, GvalY, printer[i], "genetic")
 
 def tuning_mlp(CtrX, CtrY, CvalX, CvalY, GtrX, GtrY, GvalX, GvalY):
     max_auc_ctr = 0
