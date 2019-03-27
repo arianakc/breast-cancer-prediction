@@ -5,7 +5,7 @@ from random import randint
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
-
+from sklearn.ensemble import GradientBoostingClassifier
 #Using 7 baseline methods to predict and compute results' AUC.
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
@@ -49,7 +49,7 @@ def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
         classify(inner[i], CtrX, CtrY, CvalX, CvalY, printer[i], "clinical")
         classify(inner[i], GtrX, GtrY, GvalX, GvalY, printer[i], "genetic")
 
-def fine_tuning_mlp(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
+def tuning_mlp(CtrX, CtrY, CvalX, CvalY, GtrX, GtrY, GvalX, GvalY):
     max_auc_ctr = 0
     max_hidden_size_ctr = 1
     for i in range(100):
