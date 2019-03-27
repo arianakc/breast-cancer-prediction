@@ -15,6 +15,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import  MLPClassifier
+import warnings
+warnings.filterwarnings("ignore")
 
 def classify(classifier, X, Y, valX, valY, name, type):
     classifier.fit(X, Y)
@@ -32,9 +34,9 @@ def classify(classifier, X, Y, valX, valY, name, type):
 
 
 def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
-    printer = ['MLPClassifier', 'LogisticRegression','KNeighborsClassifier','Linear SVC', 'rbf SVC','GaussianNB',
-               'DecisionTreeClassifier','RandomForestClassifier']
-    inner = [MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1),
+    printer = ['MLPClassifier', 'LogisticRegression', 'KNeighborsClassifier', 'Linear SVC', 'rbf SVC', 'GaussianNB',
+               'DecisionTreeClassifier', 'RandomForestClassifier']
+    inner = [MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(70), random_state=1),
               LogisticRegression(random_state=0),
               KNeighborsClassifier(n_neighbors=5, metric='minkowski', p=2),
              SVC(kernel='linear', random_state=0),
@@ -47,7 +49,41 @@ def baseline(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
         classify(inner[i], CtrX, CtrY, CvalX, CvalY, printer[i], "clinical")
         classify(inner[i], GtrX, GtrY, GvalX, GvalY, printer[i], "genetic")
 
+def fine_tuning_mlp(CtrX,CtrY,CvalX,CvalY,GtrX,GtrY,GvalX,GvalY):
+    max_auc_ctr = 0
+    max_hidden_size_ctr = 1
+    for i in range(100):
+        mlp = MLPClassifier(solver='sgd', activation="relu", alpha=1e-5, hidden_layer_sizes=(i+1), random_state=1)
+        mlp.fit(CtrX, CtrY)
+        Y_pred = mlp.predict(CvalX)
+        fpr, tpr, thresholds = roc_curve(CvalY, Y_pred)
+        auc1 = auc(fpr, tpr)
+        if auc1>max_auc_ctr:
+            max_auc_ctr = auc1
+            max_hidden_size_ctr = i+1
+    print(max_hidden_size_ctr)
+    print(max_auc_ctr)
+    max_auc_gtr = 0
+    max_hidden_size_gtr = 1
+    for i in range(100):
+        print(i+1)
+        mlp = MLPClassifier(solver='sgd', activation="relu", alpha=1e-5, hidden_layer_sizes=(i+1), random_state=1)
+        mlp.fit(GtrX, GtrY)
+        Y_pred = mlp.predict(GvalX)
+        fpr, tpr, thresholds = roc_curve(GvalY, Y_pred)
+        auc1 = auc(fpr, tpr)
+        if auc1>max_auc_gtr:
+            max_auc_gtr = auc1
+            max_hidden_size_gtr = i+1
+    print(max_hidden_size_gtr)
+    print(max_auc_gtr)
+    return max_hidden_size_ctr, max_auc_ctr,  max_auc_gtr, max_hidden_size_gtr
 
 if __name__ == '__main__':
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data()
     baseline(Ctr_X, Ctr_Y, Cval_X, Cval_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y)
+    # max_hidden_size_ctr, max_auc_ctr, max_auc_gtr, max_hidden_size_gtr = fine_tuning_mlp(Ctr_X, Ctr_Y, Cval_X, Cval_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y)
+    # print(max_hidden_size_ctr)
+    # print(max_auc_ctr)
+    # print(max_hidden_size_gtr)
+    # print(max_auc_gtr)
