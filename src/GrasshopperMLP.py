@@ -44,18 +44,7 @@ ACTIVATIONS = {'tanh': tanh, 'logistic': logistic, 'relu': relu}
 
 
 def initialization(N, dim, up, down):
-    if np.size(up, 0) == 1:
-        X = np.random.rand(N, dim)*(up-down)+down
-    elif np.size(up, 0) > 1:
-        X = np.zeros(N, dim)
-        for i in range(dim):
-            high = up[i]
-            low = down[i]
-            X[:, i] = np.random.rand(1, N)*(high - low)+low
-    else:
-        X = np.zeros(N, dim)
-        print("wrong size")
-        exit(0)
+    X = np.random.rand(N, dim) * (up - down) + down
     return X
 
 
@@ -150,10 +139,10 @@ class GOAMultilayerPerceptron:
             flag = 1
         if flag == 1:
             self.grasshopper_vector.append(0)
-        grasshopper_positions = []
-        for i in range(N):
-            grasshopper_positions.append(self.grasshopper_vector)
-        grasshopper_positions = np.array(grasshopper_positions)
+        # grasshopper_positions = []
+        # for i in range(N):
+        #     grasshopper_positions.append()
+        grasshopper_positions = initialization(N, dim, self.lb, self.ub)
         grasshopper_fitness = []
         cmax = 1
         cmin = 0.00004
@@ -221,7 +210,7 @@ class GOAMultilayerPerceptron:
             target_position = target_position[0:-1]
         coefss, interceptss = self.decode(target_position)
         self.coefs_ = coefss
-        self.intercepts_ = coefss
+        self.intercepts_ = interceptss
 
     def init_coef(self, fan_in, fan_out):
         # Use the initialization method recommended by
@@ -246,16 +235,6 @@ class GOAMultilayerPerceptron:
         for array in intercepts:
             self.n_intercepts.append(np.shape(array))
             grasshopper_position += list(array)
-        # print(grasshopper_position)
-        # print(self.n_coefs)
-        # print(self.n_intercepts)
-        # tcoefs, tintercepts = self.decode(grasshopper_position)
-        # for i, array in enumerate(tcoefs):
-        #     print(np.array_equal(array, coefs[i]))
-        #     print(np.shape(array))
-        # for i, array in enumerate(tintercepts):
-        #     print(np.array_equal(array, intercepts[i]))
-        #     print(np.shape(array))
         return grasshopper_position
     def decode(self, grasshopper_position:list):
         coefs = []
@@ -280,7 +259,6 @@ class GOAMultilayerPerceptron:
 
     def _predict(self, X, coefs, intercepts):
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -301,7 +279,6 @@ class GOAMultilayerPerceptron:
 
     def predict(self, X):
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -336,7 +313,7 @@ class GOAMultilayerPerceptron:
 
 if __name__ == '__main__':
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data()
-    goamlp_ctr = GOAMultilayerPerceptron(N=5000, hidden_layer_sizes=[70], max_iter=1000, random_state=1)
+    goamlp_ctr = GOAMultilayerPerceptron(N=100, hidden_layer_sizes=[70], max_iter=250, random_state=1)
     classify(goamlp_ctr, Ctr_X, Ctr_Y, Cval_X, Cval_Y, "GOAMLPClassifier", "clinical")
-    goamlp_gtr = GOAMultilayerPerceptron(N=5000, hidden_layer_sizes=[36], max_iter=1000, random_state=1)
+    goamlp_gtr = GOAMultilayerPerceptron(N=100, hidden_layer_sizes=[36], max_iter=250, random_state=1)
     classify(goamlp_gtr, Gtr_X, Gtr_Y, Gval_X, Gval_Y, "GOAMLPClassifier", "genetic")
