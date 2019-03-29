@@ -70,12 +70,14 @@ def s_func(r):
     return 0.5*np.exp(-r/1.5)-np.exp(-r)
 
 class GOAMultilayerPerceptron:
-    def __init__(self, N, hidden_layer_sizes, max_iter, random_state, activation="relu"):
+    def __init__(self, N, hidden_layer_sizes, max_iter, random_state, x_val, y_val, activation="relu"):
         self.N = N
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
         self.max_iter = max_iter
         self.random_state = check_random_state(random_state)
+        self.xval = x_val
+        self.yval = y_val
     def _forward_pass(self, activations, coefs, intercepts):
         hidden_activation = ACTIVATIONS[self.activation]
         # Iterate over the hidden layers
@@ -110,7 +112,7 @@ class GOAMultilayerPerceptron:
         self.lb = -bound
 
     def fit(self, X, y):
-        inicial_mlp = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=self.hidden_layer_sizes, random_state=1)
+        inicial_mlp = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=self.hidden_layer_sizes, random_state=8997)
         inicial_mlp.fit(X, y)
         N = self.N
         max_iter = self.max_iter
@@ -125,6 +127,7 @@ class GOAMultilayerPerceptron:
                        [self.n_outputs_])
         self.initialize(y, layer_units, inicial_mlp.coefs_, inicial_mlp.intercepts_)
         y = self.label_binarizer.inverse_transform(y)
+        bestauc = 0
         flag = 0
         dim = self.dim
         print("dim:", dim)
@@ -139,10 +142,11 @@ class GOAMultilayerPerceptron:
             flag = 1
         if flag == 1:
             self.grasshopper_vector.append(0)
-        # grasshopper_positions = []
-        # for i in range(N):
-        #     grasshopper_positions.append()
-        grasshopper_positions = initialization(N, dim, self.lb, self.ub)
+        grasshopper_positions = []
+        for i in range(N):
+            grasshopper_positions.append(self.grasshopper_vector)
+        # grasshopper_positions = initialization(N, dim, self.lb, self.ub)
+        grasshopper_positions = np.array(grasshopper_positions)
         grasshopper_fitness = []
         cmax = 1
         cmin = 0.00004
@@ -151,12 +155,22 @@ class GOAMultilayerPerceptron:
                 grasshopper_position = grasshopper_positions[i][0:-1]
                 coefs, intercepts = self.decode(grasshopper_position)
                 y_pred = self._predict(X, coefs, intercepts)
-                grasshopper_fitness.append(binary_log_loss(y, y_pred))
+                y_pred = y_pred.ravel()
+                self.label_binarizer.inverse_transform(y_pred)
+                fpr, tpr, thresholds = roc_curve(y, y_pred)
+                auc1 = auc(fpr, tpr)
+                grasshopper_fitness.append(auc1)
+                # grasshopper_fitness.append(binary_log_loss(y, y_pred))
             else:
                 grasshopper_position = grasshopper_positions[i]
                 coefs, intercepts = self.decode(grasshopper_position)
                 y_pred = self._predict(X, coefs, intercepts)
-                grasshopper_fitness.append(binary_log_loss(y, y_pred))
+                y_pred = y_pred.ravel()
+                self.label_binarizer.inverse_transform(y_pred)
+                fpr, tpr, thresholds = roc_curve(y, y_pred)
+                auc1 = auc(fpr, tpr)
+                grasshopper_fitness.append(auc1)
+                # grasshopper_fitness.append(binary_log_loss(y, y_pred))
         sorted_indexes = list(np.array(grasshopper_fitness).argsort())
         grasshopper_fitness.sort(reverse=True)
         sorted_grasshopper = []
@@ -195,16 +209,41 @@ class GOAMultilayerPerceptron:
                     grasshopper_position = grasshopper_positions[i][0:-1]
                     coefs, intercepts = self.decode(grasshopper_position)
                     y_pred = self._predict(X, coefs, intercepts)
-                    grasshopper_fitness = binary_log_loss(y, y_pred)
+                    y_pred = y_pred.ravel()
+                    self.label_binarizer.inverse_transform(y_pred)
+                    fpr, tpr, thresholds = roc_curve(y, y_pred)
+                    auc1 = auc(fpr, tpr)
+                    grasshopper_fitness = auc1
+                    # grasshopper_fitness = binary_log_loss(y, y_pred)
                 else:
                     grasshopper_position = grasshopper_positions[i]
                     coefs, intercepts = self.decode(grasshopper_position)
                     y_pred = self._predict(X, coefs, intercepts)
-                    grasshopper_fitness = binary_log_loss(y, y_pred)
-                if grasshopper_fitness < target_fitness:
+                    y_pred = y_pred.ravel()
+                    self.label_binarizer.inverse_transform(y_pred)
+                    fpr, tpr, thresholds = roc_curve(y, y_pred)
+                    auc1 = auc(fpr, tpr)
+                    grasshopper_fitness = auc1
+                    #grasshopper_fitness = binary_log_loss(y, y_pred)
+                if grasshopper_fitness > target_fitness:
                     target_position = grasshopper_positions[i]
                     target_fitness = grasshopper_fitness
                     print("new_fitness:", target_fitness)
+                    y_pred = self._predict(X, coefs, intercepts)
+                    y_pred = y_pred.ravel()
+                    self.label_binarizer.inverse_transform(y_pred)
+                    fpr, tpr, thresholds = roc_curve(y, y_pred)
+                    auc1 = auc(fpr, tpr)
+                    print("training auc:", auc1)
+
+                    y_pred = self._predict(self.xval, coefs, intercepts)
+                    y_pred = y_pred.ravel()
+                    self.label_binarizer.inverse_transform(y_pred)
+                    fpr, tpr, thresholds = roc_curve(self.yval, y_pred)
+                    auc1 = auc(fpr, tpr)
+                    if auc1>bestauc:
+                        bestauc = auc1
+                        print("best auc on validation set:", bestauc)
             l=l+1
         if flag == 1:
             target_position = target_position[0:-1]
@@ -313,7 +352,7 @@ class GOAMultilayerPerceptron:
 
 if __name__ == '__main__':
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data()
-    goamlp_ctr = GOAMultilayerPerceptron(N=100, hidden_layer_sizes=[70], max_iter=250, random_state=1)
+    goamlp_ctr = GOAMultilayerPerceptron(N=100, x_val=Cval_X, y_val=Cval_Y, hidden_layer_sizes=[70], max_iter=5000, random_state=1)
     classify(goamlp_ctr, Ctr_X, Ctr_Y, Cval_X, Cval_Y, "GOAMLPClassifier", "clinical")
-    goamlp_gtr = GOAMultilayerPerceptron(N=100, hidden_layer_sizes=[36], max_iter=250, random_state=1)
+    goamlp_gtr = GOAMultilayerPerceptron(N=10000, x_val=Gval_X, y_val=Gval_Y, hidden_layer_sizes=[36], max_iter=50, random_state=1)
     classify(goamlp_gtr, Gtr_X, Gtr_Y, Gval_X, Gval_Y, "GOAMLPClassifier", "genetic")
