@@ -7,7 +7,6 @@ from class_list import ClassList
 from binning import BinStructure
 from sampling import RowSampler, ColumnSampler
 import logging
-from collections import defaultdict
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s : %(message)s', datefmt="[%H:%M:%S]")
 
@@ -38,7 +37,6 @@ class XGB(object):
             label,
             validation_data=(None, None),
             early_stopping_rounds=np.inf,
-            maximize=True,
             eval_metric=None,
             loss="logisticloss",
             eta=0.3,
@@ -113,14 +111,10 @@ class XGB(object):
         else:
             val_pred = np.ones(val_label.shape) * self.first_round_pred
 
-        if maximize:
-            best_val_metric = - np.inf
-            best_round = 0
-            become_worse_round = 0
-        else:
-            best_val_metric = np.inf
-            best_round = 0
-            become_worse_round = 0
+
+        best_val_metric = np.inf
+        best_round = 0
+        become_worse_round = 0
 
         # start learning
         logging.info("XGBoost start training")
@@ -165,28 +159,16 @@ class XGB(object):
                         iteration=i, eval_metric=self.eval_metric, train_metric=train_metric, val_metric=val_metric))
 
                     # check whether to early stop
-                    if maximize:
-                        if val_metric > best_val_metric:
-                            best_val_metric = val_metric
-                            best_round = i
-                            become_worse_round = 0
-                        else:
-                            become_worse_round += 1
-                        if become_worse_round > early_stopping_rounds:
-                            logging.info("XGBoost training Stop, best round is {best_round}, best {eval_metric} is {best_val_metric:.4f}".format(
-                                best_round=best_round, eval_metric=eval_metric, best_val_metric=best_val_metric))
-                            break
+                    if val_metric < best_val_metric:
+                        best_val_metric = val_metric
+                        best_round = i
+                        become_worse_round = 0
                     else:
-                        if val_metric < best_val_metric:
-                            best_val_metric = val_metric
-                            best_round = i
-                            become_worse_round = 0
-                        else:
-                            become_worse_round += 1
-                        if become_worse_round > early_stopping_rounds:
-                            logging.info("XGBoost training Stop, best round is {best_round}, best val-{eval_metric} is {best_val_metric:.4f}".format(
-                                best_round=best_round, eval_metric=eval_metric, best_val_metric=best_val_metric))
-                            break
+                        become_worse_round += 1
+                    if become_worse_round > early_stopping_rounds:
+                        logging.info("XGBoost training Stop, best round is {best_round}, best val-{eval_metric} is {best_val_metric:.4f}".format(
+                            best_round=best_round, eval_metric=eval_metric, best_val_metric=best_val_metric))
+                        break
 
     def predict(self, features):
         assert len(self.trees) > 0
@@ -195,23 +177,3 @@ class XGB(object):
         for tree in self.trees:
             preds += self.eta * tree.predict(features)
         return self.loss.transform(preds)
-
-    @property
-    def feature_importance(self):
-        feature_importance = defaultdict(lambda: 0)
-        for tree in self.trees:
-            # breadth first traversal
-            nodes = []
-            root = tree.root
-            nodes.append(root)
-            while len(nodes) != 0:
-                size = len(nodes)
-                for _ in range(size):
-                    cur_node = nodes.pop(0)
-                    if not cur_node.is_leaf:
-                        feature_importance[cur_node.split_feature] += 1
-                        nodes.append(cur_node.left_child)
-                        nodes.append(cur_node.right_child)
-                        if cur_node.nan_child is not None:
-                            nodes.append(cur_node.nan_child)
-        return sorted(feature_importance.items(),key=lambda x:x[1],reverse=True)

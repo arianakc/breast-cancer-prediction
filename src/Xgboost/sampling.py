@@ -14,7 +14,7 @@ class RowSampler(object):
 
 class ColumnSampler(object):
     def __init__(self, n, sampling_rate=0.8):
-        self.col_index = range(n)
+        self.col_index = list(range(n))
         self.n_selected = int(n*sampling_rate)
         self.col_selected = self.col_index[:self.n_selected]
 

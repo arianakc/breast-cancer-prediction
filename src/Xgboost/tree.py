@@ -2,9 +2,8 @@ from tree_node import TreeNode
 from multiprocessing import Pool, cpu_count
 from functools import partial
 import numpy as np
-import copy_reg
+import copyreg
 import types
-from time import time
 
 
 # use copy_reg to make the instance method picklable,
@@ -16,7 +15,7 @@ def _pickle_method(m):
         return getattr, (m.im_self, m.im_func.func_name)
 
 
-copy_reg.pickle(types.MethodType, _pickle_method)
+copyreg.pickle(types.MethodType, _pickle_method)
 
 
 class Tree(object):
@@ -70,33 +69,25 @@ class Tree(object):
         G_right = G_total - G_left - G_nan
         H_right = H_total - H_left - H_nan
 
-        # if we let those with missing value go to a nan child
-        gain_1 = 0.5 * (G_left**2/(H_left+self.reg_lambda)
-                      + G_right**2/(H_right+self.reg_lambda)
-                      + G_nan**2/(H_nan+self.reg_lambda)
-                      - G_total**2/(H_total+self.reg_lambda)) - 2*self.gamma
 
         # if we let those with missing value go to left child
-        gain_2 = 0.5 * ((G_left+G_nan) ** 2 / (H_left + H_nan + self.reg_lambda)
+        gain_L = 0.5 * ((G_left+G_nan) ** 2 / (H_left + H_nan + self.reg_lambda)
                         + G_right ** 2 / (H_right + self.reg_lambda)
                         - G_total ** 2 / (H_total + self.reg_lambda)) - self.gamma
 
         # if we let those with missing value go to right child
-        gain_3 = 0.5 * ( G_left ** 2 / (H_left + self.reg_lambda)
+        gain_R = 0.5 * ( G_left ** 2 / (H_left + self.reg_lambda)
                         + (G_right+G_nan) ** 2 / (H_right + H_nan + self.reg_lambda)
                         - G_total ** 2 / (H_total + self.reg_lambda)) - self.gamma
 
         nan_go_to = None
         gain = None
-        if gain_1 == max([gain_1, gain_2, gain_3]):
-            nan_go_to = 0  # nan child
-            gain = gain_1
-        elif gain_2 == max([gain_1, gain_2, gain_3]):
+        if gain_L == max([gain_L, gain_R]):
             nan_go_to = 1  # left child
-            gain = gain_2
+            gain = gain_L
         else:
             nan_go_to = 2  # right child
-            gain = gain_3
+            gain = gain_R
 
         # in this case, the trainset does not contains nan samples
         if H_nan == 0 and G_nan == 0:
@@ -104,12 +95,13 @@ class Tree(object):
 
         return nan_go_to, gain
 
-    def _process_one_attribute_list(self, class_list, (col_attribute_list, col_attribute_list_cutting_index, col)):
+    def _process_one_attribute_list(self, class_list, col_attribute_list_col_attribute_list_cutting_index_col):
         """
         this function is base for parallel using multiprocessing,
         so all operation are read-only
 
         """
+        col_attribute_list, col_attribute_list_cutting_index, col = col_attribute_list_col_attribute_list_cutting_index_col
         ret = []
         # linear scan this column's attribute list, bin by bin
         for uint8_threshold in range(len(col_attribute_list_cutting_index) - 1):
@@ -165,10 +157,6 @@ class Tree(object):
                     left_child = TreeNode(name=3*tree_node.name-1, depth=tree_node.depth+1, feature_dim=attribute_list.feature_dim)
                     right_child = TreeNode(name=3*tree_node.name+1, depth=tree_node.depth+1, feature_dim=attribute_list.feature_dim)
                     nan_child = None
-                    # this case we can create the nan child
-                    if best_nan_go_to == 0:
-                        nan_child = TreeNode(name=3*tree_node.name, depth=tree_node.depth+1, feature_dim=attribute_list.feature_dim)
-                        self.nan_nodes_cnt += 1
                     # this tree node is internal node
                     tree_node.internal_node_setter(best_feature, best_uint8_threshold, best_threshold, nan_child, left_child, right_child)
 
@@ -258,14 +246,7 @@ class Tree(object):
                     elif cur_tree_node.nan_go_to == 2:
                         cur_tree_node = cur_tree_node.right_child
                     elif cur_tree_node.nan_go_to == 3:
-                        # Sudden fantasy
-                        # any other solution?
-                        if cur_tree_node.left_child.num_sample > cur_tree_node.right_child.num_sample:
-                            cur_tree_node = cur_tree_node.left_child
-                        else:
-                            cur_tree_node = cur_tree_node.right_child
-                else:
-                    cur_tree_node = cur_tree_node.nan_child
+                        pass
             elif feature[cur_tree_node.split_feature] <= cur_tree_node.split_threshold:
                 cur_tree_node = cur_tree_node.left_child
             else:

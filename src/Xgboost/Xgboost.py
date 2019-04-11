@@ -8,7 +8,7 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import *
 from sklearn.ensemble import GradientBoostingClassifier
 from multiprocessing import freeze_support
-import training
+from gbm import XGB
 def result_printer(test_Y, pred_Y, type):
     fpr, tpr, thresholds = roc_curve(test_Y, pred_Y)
     auc1 = auc(fpr, tpr)
@@ -23,6 +23,7 @@ def result_printer(test_Y, pred_Y, type):
     plt.show()
 
 def run_myboost(tr_X, tr_Y, val_X, val_Y, test_X, test_Y, n_est, early_stop, type):
+    xgb = XGB()
     params = {'loss': "logisticloss",
               'eta': 0.7,
               'max_depth': 6,
@@ -36,9 +37,8 @@ def run_myboost(tr_X, tr_Y, val_X, val_Y, test_X, test_Y, n_est, early_stop, typ
               'gamma': 0.2,
               'eval_metric': "error",
               'early_stopping_rounds': early_stop,
-              'maximize': False,
               'num_thread':3}
-    xgb = training.train(tr_X, tr_Y, validation_data=(val_X, val_Y), **params)
+    xgb.fit(tr_X, tr_Y, validation_data=(val_X, val_Y), **params)
     predictions = xgb.predict(test_X)
     result_printer(test_Y, predictions, type)
 
@@ -59,8 +59,8 @@ def my_testing():
     genomic_Y = preprocessor.genomic_Y
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = devide(clinical_X, clinical_Y)
     Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = devide(genomic_X, genomic_Y)
-    #run_myboost(Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, 1000, 5, 'Clinical')
-    run_myboost(Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y, 1000, 5, 'Genomics')
+    run_myboost(Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, 1000, 5, 'Clinical')
+    #run_myboost(Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y, 1000, 5, 'Genomics')
 
 def sk_testing():
     preprocessor = Preprocessor()
@@ -77,12 +77,12 @@ if __name__=='__main__':
 
 #Official Xgboost result
 def pack_Xgboost(tr_X, tr_Y, val_X, val_Y, test_X, test_Y, n_est, early_stop, type):
-    my_model = XGBClassifier(n_estimators=n_est,learning_rate=0.1, max_depth=200,
+    model = XGBClassifier(n_estimators=n_est,learning_rate=0.1, max_depth=200,
                          gamma=0.2, subsample=0.6, colsample_bytree=1.0,
                         objective='binary:logistic', nthread=4)
-    my_model.fit(tr_X, tr_Y, early_stopping_rounds=early_stop,
+    model.fit(tr_X, tr_Y, early_stopping_rounds=early_stop,
              eval_set=[(val_X, val_Y)], verbose=False)
-    predictions = my_model.predict(test_X)
+    predictions = model.predict(test_X)
     result_printer(test_Y, predictions, type)
 
 

@@ -46,10 +46,7 @@ class BinStructure(object):
             distinct_value_cnt = {}
             selected_inds = self.data_sampling(i)
             for value in self.features[selected_inds, i]:
-                if distinct_value_cnt.has_key(value):
-                    distinct_value_cnt[value] += 1
-                else:
-                    distinct_value_cnt[value] = 1
+                    distinct_value_cnt[value] = distinct_value_cnt.get(value,0) + 1
 
             sorted_distinct_value = sorted(distinct_value_cnt.keys())
 
