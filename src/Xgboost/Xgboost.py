@@ -1,6 +1,6 @@
 from xgboost import XGBClassifier
-from preprocess import Preprocessor
-from Baseline import devide
+from src.Xgboost.preprocess import Preprocessor
+from src.Xgboost.Baseline import devide
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error
@@ -8,7 +8,7 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import *
 from sklearn.ensemble import GradientBoostingClassifier
 from multiprocessing import freeze_support
-from gbm import XGB
+from src.Xgboost.gbm import XGB
 def result_printer(test_Y, pred_Y, type):
     fpr, tpr, thresholds = roc_curve(test_Y, pred_Y)
     auc1 = auc(fpr, tpr)

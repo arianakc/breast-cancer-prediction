@@ -1,11 +1,11 @@
 import numpy as np
-from loss import SquareLoss, LogisticLoss
-from tree import Tree
-from metric import get_metric
-from attribute_list import AttributeList
-from class_list import ClassList
-from binning import BinStructure
-from sampling import RowSampler, ColumnSampler
+from src.Xgboost.loss import SquareLoss, LogisticLoss
+from src.Xgboost.tree import Tree
+from src.Xgboost.metric import get_metric
+from src.Xgboost.attribute_list import AttributeList
+from src.Xgboost.class_list import ClassList
+from src.Xgboost.binning import BinStructure
+from src.Xgboost.sampling import RowSampler, ColumnSampler
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s : %(message)s', datefmt="[%H:%M:%S]")

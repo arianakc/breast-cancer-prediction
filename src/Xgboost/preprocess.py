@@ -1,13 +1,16 @@
-import pandas as pd
+import os
+import pickle
+
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import Imputer, LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.model_selection import train_test_split
+import pandas as pd
+from google_drive_downloader import GoogleDriveDownloader as gdd
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+from sklearn.utils import shuffle
 
 
 class Preprocessor:
 
-    def __init__(self):
+    def __init__(self, keep_unlabeled_data=False):
         self.data_expression_median = None
         self.data_CNA = None
         self.data_mutations_mskcc = None
@@ -26,7 +29,7 @@ class Preprocessor:
         # if there is no data file uncomment the following code.
         # self.get_data_file()
 
-        self.preprocess_clinical_data_file()
+        self.preprocess_clinical_data_file(keep_unlabeled_data)
         self.preprocess_genomic_data_file()
 
     def Y_encoding(self, data):
@@ -64,10 +67,20 @@ class Preprocessor:
             onehot[i] = 1
         return list(onehot)
 
+    def get_data_file(self):
+        data_expression_median = "1jV89yYOUBWnPPC4oOhJGo_MaIwPQ2Nk0"
+        data_CNA = "1ac045VSEWOxgkSdZREdW3z5KNRpoObCt"
+        data_mutations_mskcc = "1YOg6G0DGQu5LLIO8-E1Fkz2f43_zNIG-"
+        data_clinical_patient = "1GYWvq1XsCqJvTE38hWU-Zu7EMjoKoKnl"
+        gdd.download_file_from_google_drive(file_id=data_expression_median,
+                                            dest_path='../data/data_expression_median.txt')
+        gdd.download_file_from_google_drive(file_id=data_CNA, dest_path='../data/data_CNA.txt')
+        gdd.download_file_from_google_drive(file_id=data_mutations_mskcc, dest_path='../data/data_mutations_mskcc.txt')
+        gdd.download_file_from_google_drive(file_id=data_clinical_patient,
+                                            dest_path='../data/data_clinical_patient.txt')
 
-
-    def preprocess_clinical_data_file(self):
-        self.data_clinical_patient = pd.read_csv("../../data/data_clinical_patient.txt", sep='\t', skiprows=4, index_col=0)
+    def preprocess_clinical_data_file(self, keep_unlabeled_data=False):
+        self.data_clinical_patient = pd.read_csv("../data/data_clinical_patient.txt", sep='\t', skiprows=4, index_col=0)
         # print(self.data_clinical_patient.head())
 
         # add Y
@@ -77,7 +90,8 @@ class Preprocessor:
         self.data_clinical_patient.drop(columns=['OS_MONTHS', 'VITAL_STATUS'], inplace=True)
 
         # drop ignored rows
-        self.data_clinical_patient = self.data_clinical_patient[self.data_clinical_patient['Y'] != -1]
+        if not keep_unlabeled_data:
+            self.data_clinical_patient = self.data_clinical_patient[self.data_clinical_patient['Y'] != -1]
 
         # drop the missing value rows of numeric value
         self.data_clinical_patient = self.data_clinical_patient[
@@ -144,13 +158,13 @@ class Preprocessor:
 
     def preprocess_genomic_data_file(self):
         # Data expression median is the file of the expression extent of the certain gene by some kind of normalization
-        self.data_expression_median = pd.read_csv("../../data/data_expression_median.txt", sep='\t')
+        self.data_expression_median = pd.read_csv("../data/data_expression_median.txt", sep='\t')
 
         # data CNA is the file of the copy of gene on the dna
         self.data_CNA = pd.read_csv("../data/data_CNA.txt", sep='\t')
 
         # data mutations is the file of the mutations of gene
-        self.data_mutations_mskcc = pd.read_csv("../../data/data_mutations_mskcc.txt", sep='\t', skiprows=1, index_col=0)
+        self.data_mutations_mskcc = pd.read_csv("../data/data_mutations_mskcc.txt", sep='\t', skiprows=1, index_col=0)
 
         all_patient_dict = {}
         # The target of this preprocess is to build the input matrix of features of gene based on each patient.
@@ -239,5 +253,59 @@ class Preprocessor:
         print("Generate genomic data matrix and clinical data matrix successfully")
 
 
+def divide(X, Y):
+    X, Y = shuffle(X, Y, random_state=0)
+    x_train = X[0:int(len(X) * 0.8)]
+    y_train = Y[0:int(len(Y) * 0.8)]
+    x_val = X[int(len(X) * 0.8):int(len(X) * 0.9)]
+    y_val = Y[int(len(Y) * 0.8):int(len(Y) * 0.9)]
+    x_tst = X[int(len(X) * 0.9):len(X)]
+    y_tst = Y[int(len(Y) * 0.9):len(Y)]
+    return x_train, y_train, x_val, y_val, x_tst, y_tst
+
+
+def load_data(keep_unlabeled_data=False):
+    curdir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(curdir, '..', 'data')
+    cache_path = os.path.join(data_dir, 'unlabeled.pkl' if keep_unlabeled_data else 'labeled.pkl')
+    try:
+        with open(cache_path, 'rb') as f:
+            return pickle.load(f)
+    except Exception:
+        pass
+    # preprocessing data
+    preprocessor = Preprocessor(keep_unlabeled_data)
+    clinical_X = preprocessor.clinical_X
+    clinical_Y = preprocessor.clinical_Y
+    if keep_unlabeled_data:
+        unlabeled_clinical_X = clinical_X[clinical_Y == -1]
+        clinical_X = clinical_X[clinical_Y != -1]
+        clinical_Y = clinical_Y[clinical_Y != -1]
+
+    genomic_X = preprocessor.genomic_X
+    genomic_Y = preprocessor.genomic_Y
+
+    # devide data set into 8:1:1 as train,validate,test set
+    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = divide(clinical_X, clinical_Y)
+    Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = divide(genomic_X, genomic_Y)
+    if keep_unlabeled_data:
+        data = (
+            unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y)
+    else:
+        data = (Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y)
+    with open(cache_path, 'wb') as f:
+        pickle.dump(data, f)
+    return data
+
+
 if __name__ == '__main__':
-    preprocessor = Preprocessor()
+    Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(False)
+    unlabeled_clinical_X, Ctr_X2, Ctr_Y2, Cval_X2, Cval_Y2, Ct_X2, Ct_Y2, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(
+        True)
+    # feature values are not equal due to scaling
+    # assert np.array_equal(Ctr_X, Ctr_X2)
+    assert np.array_equal(Ctr_Y, Ctr_Y2)
+    # assert np.array_equal(Cval_X, Cval_X2)
+    assert np.array_equal(Cval_Y, Cval_Y2)
+    # assert np.array_equal(Ct_X, Ct_X2)
+    assert np.array_equal(Ct_Y, Ct_Y2)

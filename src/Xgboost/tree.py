@@ -1,4 +1,4 @@
-from tree_node import TreeNode
+from src.Xgboost.tree_node import TreeNode
 from multiprocessing import Pool, cpu_count
 from functools import partial
 import numpy as np
