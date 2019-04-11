@@ -104,8 +104,9 @@ if __name__ == '__main__':
             cotraining.fit(Ctr_X, Ctr_Y)
             assert Ctr_X.shape[0] == Ctr_Y.shape[0]
             score = accuracy_score(Cval_Y, cotraining.predict(Cval_X))
-            logger.info('{} {}'.format(', '.join(str(i) for i in features1), score))
+            score *= 100
             if score > best_score:
                 best_score = score
                 best_features = features1
-    logger.info('Best score={} feature={}'.format(best_score, ', '.join(str(i) for i in best_features)))
+            logger.info('[{}] score={:.2f} best={:.2f}'.format(','.join(str(i) for i in features1), score, best_score))
+    logger.info('Best score={} feature={}'.format(best_score, ','.join(str(i) for i in best_features)))
