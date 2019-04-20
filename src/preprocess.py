@@ -87,7 +87,7 @@ class Preprocessor:
         self.data_clinical_patient['Y'] = self.Y_encoding(self.data_clinical_patient)
 
         # delete the related but not Y column
-        self.data_clinical_patient.drop(columns=['OS_MONTHS', 'VITAL_STATUS'], inplace=True)
+        self.data_clinical_patient.drop(columns=['OS_MONTHS', 'VITAL_STATUS', 'OS_STATUS'], inplace=True)
 
         # drop ignored rows
         if not keep_unlabeled_data:
@@ -133,7 +133,6 @@ class Preprocessor:
         self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'] = labelencoder.fit_transform(
             self.data_clinical_patient['INFERRED_MENOPAUSAL_STATE'])
         self.data_clinical_patient['INTCLUST'] = labelencoder.fit_transform(self.data_clinical_patient['INTCLUST'])
-        self.data_clinical_patient['OS_STATUS'] = labelencoder.fit_transform(self.data_clinical_patient['OS_STATUS'])
         self.data_clinical_patient['CLAUDIN_SUBTYPE'] = labelencoder.fit_transform(
             self.data_clinical_patient['CLAUDIN_SUBTYPE'])
         self.data_clinical_patient['THREEGENE'] = labelencoder.fit_transform(self.data_clinical_patient['THREEGENE'])
@@ -145,7 +144,7 @@ class Preprocessor:
         self.data_clinical_patient['BREAST_SURGERY'] = labelencoder.fit_transform(
             self.data_clinical_patient['BREAST_SURGERY'])
 
-        onehotencoder = OneHotEncoder(categorical_features=[2, 3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17])
+        onehotencoder = OneHotEncoder(categorical_features=[2, 3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16])
         self.data_clinical_patient = onehotencoder.fit_transform(self.data_clinical_patient).toarray()
 
         # Feature Scaling
@@ -241,12 +240,12 @@ class Preprocessor:
             self.genomic_patient_features.append(data_array)
         self.genomic_X = np.array(self.genomic_patient_features)
         # Feature Scaling
-        sc = StandardScaler()
-        self.genomic_X = sc.fit_transform(self.genomic_X)
         df = pd.DataFrame(self.genomic_X)
         indexs = np.where(np.isnan(df))
         nulllistindex = list(set(indexs[0]))
         self.genomic_X = np.delete(self.genomic_X, nulllistindex, axis=0)
+        sc = StandardScaler()
+        self.genomic_X = sc.fit_transform(self.genomic_X)
         self.genomic_Y = np.delete(np.array(self.clinical_Y_genomic_existed), nulllistindex, axis=0)
         self.clinical_X = np.delete(np.array(self.clinical_X_genomic_existed), nulllistindex, axis=0)
         self.clinical_Y = np.delete(np.array(self.clinical_Y_genomic_existed), nulllistindex, axis=0)
@@ -273,6 +272,7 @@ def load_data(keep_unlabeled_data=False):
             return pickle.load(f)
     except Exception:
         pass
+
     # preprocessing data
     preprocessor = Preprocessor(keep_unlabeled_data)
     clinical_X = preprocessor.clinical_X
@@ -285,7 +285,7 @@ def load_data(keep_unlabeled_data=False):
     genomic_X = preprocessor.genomic_X
     genomic_Y = preprocessor.genomic_Y
 
-    # devide data set into 8:1:1 as train,validate,test set
+    # divide data set into 8:1:1 as train,validate,test set
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = divide(clinical_X, clinical_Y)
     Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = divide(genomic_X, genomic_Y)
     if keep_unlabeled_data:
