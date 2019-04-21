@@ -13,20 +13,24 @@ from src.semisup.utility import init_logger
 
 
 class CoTrainingWrapper(BaseEstimator):
-    def __init__(self, model1, model2, features1, features2, k=300, unlabeled_pool_size=75) -> None:
+    def __init__(self, model1, model2, features1, features2, max_iter=300, unlabeled_pool_size=75) -> None:
         self.features2 = features2
         self.features1 = features1
         self.model1 = model1
         self.model2 = model2
-        self.max_iter = k
-        self.u = unlabeled_pool_size
+        self.max_iter = max_iter
+        self.unlabeled_pool_size = unlabeled_pool_size
 
     def choose_samples_most_confidently(self, prob, label, top_k):
         p = prob[:, label]
         indices = p.argsort()
         return indices[:top_k]
 
-    def fit(self, X, y: np.ndarray):
+    def fit(self, X, y: np.ndarray, unlabeled_X=None):
+        if unlabeled_X is not None:
+            X = np.concatenate([X, unlabeled_X])
+            unlabeled_y = np.ones(len(unlabeled_X)) * -1
+            y = np.concatenate([y, unlabeled_y])
         X1, X2 = X[:, self.features1], X[:, self.features2]
         freq = dict(zip(*np.unique(y, return_counts=True)))
         num_p = freq[1]
@@ -39,7 +43,7 @@ class CoTrainingWrapper(BaseEstimator):
             p = int(round(num_p / num_n))
 
         unlabeled_remained = np.where(y == -1)[0]
-        u = min(len(unlabeled_remained), self.u)
+        u = min(len(unlabeled_remained), self.unlabeled_pool_size)
         unlabeled_pool = unlabeled_remained[:u]
         unlabeled_remained = unlabeled_remained[u:]
         labeled_pool = np.where(y != -1)[0]
@@ -79,18 +83,21 @@ class CoTrainingWrapper(BaseEstimator):
         ensemble: np.ndarray = proba1 + proba2
         return ensemble.argmax(axis=1)
 
+    def score(self, X, y):
+        return accuracy_score(y, self.predict(X))
+
 
 if __name__ == '__main__':
-    unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(
+    unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, unlabeled_genomic_X, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(
         True)
 
-    num_unlabeled_samples = len(unlabeled_clinical_X)
-    num_features = Ctr_X.shape[1]
+    num_unlabeled_samples = len(unlabeled_genomic_X)
+    num_features = Gtr_X.shape[1]
     unlabeled_y = np.ones(num_unlabeled_samples) * -1
-    Ctr_X = np.concatenate([Ctr_X, unlabeled_clinical_X])
-    Ctr_Y = np.concatenate([Ctr_Y, unlabeled_y])
+    Gtr_X = np.concatenate([Gtr_X, unlabeled_genomic_X])
+    Gtr_Y = np.concatenate([Gtr_Y, unlabeled_y])
     features = set(range(0, num_features))
-    logger = init_logger()
+    logger = init_logger(name='genomic_feature.log')
     best_score, best_features = 0, None
     for size in range(1, int(num_features / 2) + 1):
         for features1 in set(itertools.combinations(features, size)):
@@ -98,12 +105,12 @@ if __name__ == '__main__':
             features2 = features - features1
             features1 = np.array(list(features1), dtype=np.int)
             features2 = np.array(list(features2), dtype=np.int)
-            cotraining = CoTrainingWrapper(LogisticRegression(solver='lbfgs'), LogisticRegression(solver='lbfgs'),
+            cotraining = CoTrainingWrapper(LogisticRegression(solver='lbfgs', max_iter=300), LogisticRegression(solver='lbfgs', max_iter=300),
                                            features1,
                                            features2)
-            cotraining.fit(Ctr_X, Ctr_Y)
-            assert Ctr_X.shape[0] == Ctr_Y.shape[0]
-            score = accuracy_score(Cval_Y, cotraining.predict(Cval_X))
+            cotraining.fit(Gtr_X, Gtr_Y)
+            assert Gtr_X.shape[0] == Gtr_Y.shape[0]
+            score = accuracy_score(Gval_Y, cotraining.predict(Gval_X))
             score *= 100
             if score > best_score:
                 best_score = score

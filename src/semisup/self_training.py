@@ -5,8 +5,10 @@ from sklearn.base import BaseEstimator
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_validate
 
 from src.preprocess import load_data
+from src.semisup.utility import init_logger
 
 
 class SelfTrainingWrapper(BaseEstimator):
@@ -35,15 +37,29 @@ class SelfTrainingWrapper(BaseEstimator):
     def predict_proba(self, X):
         return self.model.predict_proba(X)
 
+    def score(self, X, y):
+        return accuracy_score(y, self.predict(X))
+
 
 if __name__ == '__main__':
-    unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(
+
+    logger = init_logger('.', name='self-training.log')
+    unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, unlabeled_genomic_X, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(
         True)
-    base_model = LogisticRegression(solver='lbfgs')
-    base_model.fit(Ctr_X, Ctr_Y)
-    # print('LogisticRegression Acc: ', end='')
-    print(accuracy_score(Cval_Y, base_model.predict(Cval_X)))
-    # print('SemiLogisticRegression Acc: ', end='')
-    semi_model = SelfTrainingWrapper(base_model)
-    semi_model.fit(Ctr_X, Ctr_Y, unlabeled_clinical_X)
-    print(accuracy_score(Cval_Y, semi_model.predict(Cval_X)))
+    for model_name, model in zip(['logistic', 'self-training'], [LogisticRegression(solver='lbfgs'),
+                                                                 SelfTrainingWrapper(
+                                                                     LogisticRegression(solver='lbfgs'))]):
+        for data_name, (unlabeled_X, train_X, train_y, dev_X, dev_y, test_X, test_y) in zip(['clinical', 'gnomic'], [
+            (unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X,
+             Cval_Y, Ct_X, Ct_Y), (
+                    unlabeled_genomic_X, Gtr_X, Gtr_Y,
+                    Gval_X,
+                    Gval_Y, Gt_X, Gt_Y)]):
+            fit_params = {'unlabeled_X': unlabeled_X} if '-' in model_name else {}
+            model.fit(train_X, train_y, **fit_params)
+            acc = accuracy_score(test_y, model.predict(test_X)) * 100
+            all_X = np.concatenate([train_X, dev_X, test_X])
+            all_Y = np.concatenate([train_y, dev_y, test_y])
+            cv_acc = cross_validate(model, all_X, all_Y, fit_params=fit_params, cv=5)
+            cv_acc = cv_acc['test_score'].mean() * 100
+            logger.info('{} {} acc {:.2f} cv {:.2f}'.format(model_name, data_name, acc, cv_acc))

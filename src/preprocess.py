@@ -277,20 +277,23 @@ def load_data(keep_unlabeled_data=False):
     preprocessor = Preprocessor(keep_unlabeled_data)
     clinical_X = preprocessor.clinical_X
     clinical_Y = preprocessor.clinical_Y
+    genomic_X = preprocessor.genomic_X
+    genomic_Y = preprocessor.genomic_Y
+
     if keep_unlabeled_data:
         unlabeled_clinical_X = clinical_X[clinical_Y == -1]
         clinical_X = clinical_X[clinical_Y != -1]
         clinical_Y = clinical_Y[clinical_Y != -1]
-
-    genomic_X = preprocessor.genomic_X
-    genomic_Y = preprocessor.genomic_Y
+        unlabeled_genomic_X = genomic_X[genomic_Y == -1]
+        genomic_X = genomic_X[genomic_Y != -1]
+        genomic_Y = genomic_Y[genomic_Y != -1]
 
     # divide data set into 8:1:1 as train,validate,test set
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y = divide(clinical_X, clinical_Y)
     Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = divide(genomic_X, genomic_Y)
     if keep_unlabeled_data:
         data = (
-            unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y)
+            unlabeled_clinical_X, Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, unlabeled_genomic_X, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y)
     else:
         data = (Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y)
     with open(cache_path, 'wb') as f:
@@ -300,7 +303,7 @@ def load_data(keep_unlabeled_data=False):
 
 if __name__ == '__main__':
     Ctr_X, Ctr_Y, Cval_X, Cval_Y, Ct_X, Ct_Y, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(False)
-    unlabeled_clinical_X, Ctr_X2, Ctr_Y2, Cval_X2, Cval_Y2, Ct_X2, Ct_Y2, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(
+    unlabeled_clinical_X, Ctr_X2, Ctr_Y2, Cval_X2, Cval_Y2, Ct_X2, Ct_Y2, unlabeled_genomic_X, Gtr_X, Gtr_Y, Gval_X, Gval_Y, Gt_X, Gt_Y = load_data(
         True)
     # feature values are not equal due to scaling
     # assert np.array_equal(Ctr_X, Ctr_X2)

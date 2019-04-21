@@ -13,7 +13,7 @@ def init_logger(root_dir='.', name="train.log"):
     :return: a logger
     """
     os.makedirs(root_dir, exist_ok=True)
-    log_formatter = logging.Formatter(fmt='%(asctime)s %(levelname)s| %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    log_formatter = logging.Formatter(fmt='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger(os.path.join(root_dir, name))
     file_handler = logging.FileHandler(os.path.join(root_dir, name), mode='w')
     file_handler.setFormatter(log_formatter)
