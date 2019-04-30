@@ -15,7 +15,7 @@ class AttributeList(object):
         # for each feature, maintain an attribute list (attribute value, index)
         self.attribute_list = [np.empty((self.dataset_size-self.feature_missing_cnt[i],),
                                         dtype=[("attribute", "uint8"), ("index", "int32")]) for i in range(self.feature_dim)]
-        # each feature is bining and store in attribute list in order
+        # each feature is binning and store in attribute list in order
         # so attribute_list_cutting_index store the cutting index for each feature
         self.attribute_list_cutting_index = [[] for _ in range(self.feature_dim)]
 

@@ -29,7 +29,6 @@ class XGB(object):
         self.gamma = None
         self.num_thread = None
         self.min_child_weight = None
-        self.scale_pos_weight = None
         self.eval_metric = None
 
     def fit(self,
@@ -42,7 +41,6 @@ class XGB(object):
             eta=0.3,
             num_boost_round=1000,
             max_depth=6,
-            scale_pos_weight=1,
             subsample=0.8,
             colsample=0.8,
             min_child_weight=1,
@@ -61,7 +59,6 @@ class XGB(object):
         :param colsample: column sample rate when building a tree
         :param min_sample_split: min number of samples in a leaf node
         :param loss: loss object
-                     logisticloss,squareloss, or customize loss
         :param reg_lambda: lambda
         :param gamma: gamma
         :param num_thread: number of threself.tree_predict_Xad to parallel
@@ -78,7 +75,6 @@ class XGB(object):
         self.num_thread = num_thread
         self.eval_metric = eval_metric
         self.min_child_weight = min_child_weight
-        self.scale_pos_weight = scale_pos_weight
         self.first_round_pred = 0
 
         # initial loss function
@@ -95,20 +91,18 @@ class XGB(object):
         attribute_list = AttributeList(features, bin_structure)
         class_list = ClassList(label)
         class_list.initialize_pred(self.first_round_pred)
-        class_list.update_grad_hess(self.loss, self.scale_pos_weight)
+        class_list.update_grad_hess(self.loss)
 
         # to evaluate on validation set and conduct early stopping
         # we should get (val_features,val_label)
         # and set some variable to check when to stop
-        do_validation = True
-        if not isinstance(validation_data, tuple):
-            raise TypeError("validation_data should be (val_features, val_label)")
 
         val_features, val_label = validation_data
         val_pred = None
         if val_features is None or val_label is None:
             do_validation = False
         else:
+            do_validation = True
             val_pred = np.ones(val_label.shape) * self.first_round_pred
 
 
@@ -132,7 +126,7 @@ class XGB(object):
 
             # when finish building this tree, update the class_list.pred, grad, hess
             class_list.update_pred(self.eta)
-            class_list.update_grad_hess(self.loss, self.scale_pos_weight)
+            class_list.update_grad_hess(self.loss)
 
             # save this tree
             self.trees.append(tree)

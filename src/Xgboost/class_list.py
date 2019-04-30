@@ -1,5 +1,4 @@
 # design a ClassList,store (label,leaf node,prediction,grad,hess) ordered by data index
-
 import numpy as np
 
 
@@ -19,14 +18,9 @@ class ClassList(object):
         for i in range(self.dataset_size):
             self.pred[i] += eta*self.corresponding_tree_node[i].leaf_score
 
-    def update_grad_hess(self, loss, scale_pos_weight):
+    def update_grad_hess(self, loss):
         self.grad[:] = loss.grad(self.pred, self.Y)
         self.hess[:] = loss.hess(self.pred, self.Y)
-        if scale_pos_weight != 1:
-            for i in range(self.dataset_size):
-                if self.Y[i] == 1:
-                    self.grad[i] *= scale_pos_weight
-                    self.hess[i] *= scale_pos_weight
 
     def sampling(self, row_mask):
         self.grad *= row_mask
@@ -41,7 +35,7 @@ class ClassList(object):
                 continue
             else:
                 if tree_node.name not in ret:
-                    ret[tree_node.name] = [0., 0.]
+                    ret[tree_node.name] = [0, 0]
                 ret[tree_node.name][0] += self.grad[i]
                 ret[tree_node.name][1] += self.hess[i]
         return ret

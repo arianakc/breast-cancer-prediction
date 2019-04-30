@@ -5,7 +5,6 @@ import numpy as np
 import copyreg
 import types
 
-
 # use copy_reg to make the instance method picklable,
 # because multiprocessing must pickle things to sling them among process
 def _pickle_method(m):
@@ -51,7 +50,6 @@ class Tree(object):
 
         # to avoid divide zero
         self.reg_lambda = max(self.reg_lambda, 0.00001)
-
     def calculate_leaf_score(self, G, H):
         """
         According to xgboost, the leaf score is : - G / (H+lambda)
@@ -258,7 +256,7 @@ class Tree(object):
         preds = pool.map(self._predict, features)
         pool.close()
         return np.array(preds)
-
+    # This predict does not need to parallel. Change in the future
     def clean_up(self):
         del self.alive_nodes, self.min_sample_split, self.min_child_weight, self.rowsample,\
             self.colsample, self.max_depth, self.reg_lambda, self.gamma
